@@ -14,7 +14,7 @@ def test():
 def generate_data(season_enabled, length):
     data = ClimatHealthData([], [], [])
     data.precipitation = [random.randint(0, 100)]
-    data.sickness = [random.randint(50, 100)]
+    data.sickness = [random.randint(999, 1000)]
     data.temperature = [random.randint(20, 30)]
 
     for i in range(1, length):
@@ -40,7 +40,8 @@ def get_precipitation(season_enabled, week):
             rain = random.randint(50, 100)
             return rain
         else:
-            rain = random.randint(0, 50)
+            # contraint the decrease of rain during non-rainy season.
+            rain = random.randint(15, 24)
             return rain
     else:
         return random.randint(0, 100)
@@ -49,11 +50,11 @@ def get_precipitation(season_enabled, week):
 def get_rain_prob(i):
     week = get_weeknumber(i)
     if week > 11 and week < 24:
-        return 0.7
+        return 0.8
     elif week > 36 and week < 40:
         return 0.8
     else:
-        return 0.3
+        return 0.4
 
 
 # Generate temperature data
@@ -64,15 +65,19 @@ def get_temp(week):
 
 
 # Generate sickness data
+#
 def get_sickness(sickness, input, weight):
     sum = np.dot(input, weight)
-    if sum > 65.2:
-        sickness = sickness + random.randint(6, 10)
-    elif sum >= 49.2:
-        sickness = sickness + random.randint(0, 5)
-    elif sum < 33.2:
+    max_dot = 77.28
+    # min_dot = 6.69
+
+    if sum > 0.75 * max_dot:
+        sickness = sickness + random.randint(4, 7)
+    elif sum >= 0.5 * max_dot:
+        sickness = sickness + random.randint(0, 4)
+    elif sum < 0.25 * max_dot:
         sickness = sickness + random.randint(-10, -6)
-    elif sum < 49.2:
+    elif sum < 0.5 * max_dot:
         sickness = sickness + random.randint(-5, 0)
     if sickness < 3:
         return random.randint(0, 3)

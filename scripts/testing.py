@@ -1,6 +1,6 @@
 from mestDS import generate_data, graph, calculate_weekly_averages
 
-data = generate_data(True, 100)
+data = generate_data(True, 1000)
 graph(
     data, sickness_enabled=True, temperature_enabled=False, precipitation_enabled=False
 )
