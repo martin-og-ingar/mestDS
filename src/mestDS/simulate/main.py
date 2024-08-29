@@ -2,6 +2,7 @@ from collections import defaultdict
 import math
 import random
 from ..classes.ClimateHealthData_module import ClimatHealthData
+from ..classes.default_variables import DEFAULT_TEMPERATURES
 import numpy as np
 
 
@@ -22,7 +23,6 @@ def generate_data(season_enabled, length):
 
         temperature = get_temp(i)
         data.temperature.append(temperature)
-
         input = np.array([precipitation, temperature])
         weight = np.array([0.7, 0.3])
         sickness = get_sickness(data.sickness[i - 1], input, weight)
@@ -59,32 +59,8 @@ def get_rain_prob(i):
 # Generate temperature data
 def get_temp(week):
     week = get_weeknumber(week)
-    month = week / 4.33
-
-    if month < 1:
-        return 23.72
-    elif month < 2:
-        return 24.26
-    elif month < 3:
-        return 24.25
-    elif month < 4:
-        return 23.71
-    elif month < 5:
-        return 23.18
-    elif month < 6:
-        return 22.67
-    elif month < 7:
-        return 22.31
-    elif month < 8:
-        return 22.68
-    elif month < 9:
-        return 22.86
-    elif month < 10:
-        return 23.16
-    elif month < 11:
-        return 23.21
-    else:
-        return 23.03
+    month = get_monthnumber(week)
+    return DEFAULT_TEMPERATURES[month]
 
 
 # Generate sickness data
@@ -109,6 +85,13 @@ def get_weeknumber(week):
     week = week / 52
     week = 52 if ((week % 1) * 52 == 0) else (week % 1) * 52
     return round(week)
+
+
+def get_monthnumber(week):
+    if week == 52:
+        return 11
+    month = week / 4.33
+    return math.floor(month)
 
 
 # calculate average
