@@ -1,21 +1,30 @@
-from collections import defaultdict
 import math
 import random
 from ..classes.ClimateHealthData_module import ClimatHealthData
 from ..classes.default_variables import DEFAULT_TEMPERATURES
 import numpy as np
+from datetime import datetime, timedelta
 
 
-def test():
-    data = ClimatHealthData([1, 2, 3], [1, 2, 3], [1, 2, 3])
-    return data
-
-
-def generate_data(season_enabled, length):
-    data = ClimatHealthData([], [], [])
+def generate_data(season_enabled, length, period):
+    data = ClimatHealthData([], [], [], [])
     data.precipitation = [random.randint(0, 100)]
-    data.sickness = [random.randint(999, 1000)]
+    data.sickness = [random.randint(50, 100)]
     data.temperature = [random.randint(20, 30)]
+    start_date = datetime.strptime("2024-01-01", "%Y-%m-%d")
+    data.date.append(start_date.strftime("%Y-%m-%d"))
+    period = "W" if period == "" else period
+
+    if period == "D":
+        delta = timedelta(days=1)
+    elif period == "W":
+        delta = timedelta(weeks=1)
+    elif period == "M":
+        delta = timedelta(weeks=4)
+    elif period == "Y":
+        delta = timedelta(weeks=52)
+    else:
+        raise ValueError(f"Unsupported period: {period}")
 
     for i in range(1, length):
         precipitation = get_precipitation(season_enabled, i)
@@ -27,6 +36,9 @@ def generate_data(season_enabled, length):
         weight = np.array([0.7, 0.3])
         sickness = get_sickness(data.sickness[i - 1], input, weight)
         data.sickness.append(sickness)
+
+        current_date = start_date + (i * delta)
+        data.date.append(current_date.strftime("%Y-%m-%d"))
 
     return data
 
