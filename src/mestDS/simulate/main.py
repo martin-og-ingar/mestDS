@@ -107,6 +107,9 @@ def calculate_weekly_averages(data):
         average_data.sickness.append(0)
         average_data.temperature.append(0)
 
+    if (len(data.precipitation)) < 52:
+        raise Exception("Length is under 52, does not calculate average")
+    print(len(data.precipitation))
     for i in range(len(data.precipitation)):
         week_number = get_weeknumber(i + 1)
         week_number = 52 if (week_number % 52 == 0) else week_number % 52
@@ -125,6 +128,8 @@ def calculate_weekly_averages(data):
 
 
 def get_divider(i, data):
+    if data == 0:
+        return 1
     decimal, whole_number = math.modf(len(data.precipitation) / 52)
     limit = 52 * decimal
     if i < limit:
