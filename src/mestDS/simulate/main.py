@@ -2,28 +2,28 @@ from collections import defaultdict
 import math
 import random
 from ..classes.ClimateHealthData_module import ClimatHealthData, Obs
-from ..classes.default_variables import DEFAULT_TEMPERATURES
+from ..classes.default_variables import DEFAULT_TEMPERATURES, TIMEDELTA, DATEFORMAT
 import numpy as np
 from climate_health.data import DataSet, PeriodObservation
+from datetime import datetime, timedelta
 
 
-def test():
-    data = ClimatHealthData([1, 2, 3], [1, 2, 3], [1, 2, 3])
-    return data
-
-
-def generate_data(season_enabled, length, start_date):
+def generate_data(season_enabled, length, start_date, period):
     data_observation = {"Uganda": []}
     precipitation = random.randint(0, 100)
     sickness = random.randint(50, 100)
     temperature = random.randint(20, 30)
+    start_date_formatted = datetime.strftime(start_date, DATEFORMAT)
     obs = Obs(
-        time_period=start_date,
+        time_period=start_date_formatted,
         disease_cases=sickness,
         rainfall=precipitation,
         temperature=temperature,
     )
     data_observation["Uganda"].append(obs)
+
+    period = "W" if period is None else period
+    delta = TIMEDELTA[period]
 
     for i in range(1, length):
         precipitation = get_precipitation(season_enabled, i)
@@ -33,8 +33,10 @@ def generate_data(season_enabled, length, start_date):
         sickness = get_sickness(
             data_observation["Uganda"][i - 1].disease_cases, input, weight
         )
+        current_date = start_date + (i * delta)
+        current_date = datetime.strftime(current_date, DATEFORMAT)
         obs = Obs(
-            time_period=start_date,
+            time_period=current_date,
             disease_cases=sickness,
             rainfall=precipitation,
             temperature=temperature,

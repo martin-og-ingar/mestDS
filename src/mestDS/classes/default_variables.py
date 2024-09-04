@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 DEFAULT_TEMPERATURES = [
     23.72,
     24.26,
@@ -12,3 +14,6 @@ DEFAULT_TEMPERATURES = [
     23.21,
     23.03,
 ]
+
+TIMEDELTA = {"D": timedelta(days=1), "W": timedelta(weeks=1), "M": timedelta(weeks=4)}
+DATEFORMAT = "%d-%m-%Y"
