@@ -2,13 +2,26 @@ import matplotlib.pyplot as plt
 
 
 def graph(data, precipitation_enabled, sickness_enabled, temperature_enabled):
+
     if sickness_enabled:
-        plt.plot(data.sickness, label="Sickness", color="green")
+        plt.plot(
+            [obs.disease_cases for obs in data["Uganda"]],
+            label="Sickness",
+            color="green",
+        )
 
     if temperature_enabled:
-        plt.plot(data.temperature, label="Temperature", color="red")
+        plt.plot(
+            [obs.temperature for obs in data["Uganda"]],
+            label="Temperature",
+            color="red",
+        )
     if precipitation_enabled:
-        plt.plot(data.precipitation, label="Precipitation", color="blue")
+        plt.plot(
+            [obs.rainfall for obs in data["Uganda"]],
+            label="Precipitation",
+            color="blue",
+        )
     plt.xlabel("Week")
     plt.grid()
     plt.show()

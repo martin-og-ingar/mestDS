@@ -1,9 +1,10 @@
 from collections import defaultdict
 import math
 import random
-from ..classes.ClimateHealthData_module import ClimatHealthData
+from ..classes.ClimateHealthData_module import ClimatHealthData, Obs
 from ..classes.default_variables import DEFAULT_TEMPERATURES
 import numpy as np
+from climate_health.data import DataSet, PeriodObservation
 
 
 def test():
@@ -11,24 +12,35 @@ def test():
     return data
 
 
-def generate_data(season_enabled, length):
-    data = ClimatHealthData([], [], [])
-    data.precipitation = [random.randint(0, 100)]
-    data.sickness = [random.randint(999, 1000)]
-    data.temperature = [random.randint(20, 30)]
+def generate_data(season_enabled, length, start_date):
+    data_observation = {"Uganda": []}
+    precipitation = random.randint(0, 100)
+    sickness = random.randint(50, 100)
+    temperature = random.randint(20, 30)
+    obs = Obs(
+        time_period=start_date,
+        disease_cases=sickness,
+        rainfall=precipitation,
+        temperature=temperature,
+    )
+    data_observation["Uganda"].append(obs)
 
     for i in range(1, length):
         precipitation = get_precipitation(season_enabled, i)
-        data.precipitation.append(precipitation)
-
         temperature = get_temp(i)
-        data.temperature.append(temperature)
         input = np.array([precipitation, temperature])
         weight = np.array([0.7, 0.3])
-        sickness = get_sickness(data.sickness[i - 1], input, weight)
-        data.sickness.append(sickness)
-
-    return data
+        sickness = get_sickness(
+            data_observation["Uganda"][i - 1].disease_cases, input, weight
+        )
+        obs = Obs(
+            time_period=start_date,
+            disease_cases=sickness,
+            rainfall=precipitation,
+            temperature=temperature,
+        )
+        data_observation["Uganda"].append(obs)
+    return data_observation
 
 
 # Generate precepitation data
@@ -101,34 +113,42 @@ def get_monthnumber(week):
 
 # calculate average
 def calculate_weekly_averages(data):
-    average_data = ClimatHealthData([], [], [])
+    average_data = {"Uganda": []}
     for i in range(52):
-        average_data.precipitation.append(0)
-        average_data.sickness.append(0)
-        average_data.temperature.append(0)
+        obs = Obs(time_period=str(i), disease_cases=0, rainfall=0, temperature=0)
+        average_data["Uganda"].append(obs)
 
-    if (len(data.precipitation)) < 52:
+    if (len(data["Uganda"])) < 52:
         raise Exception("Length is under 52, does not calculate average")
-    print(len(data.precipitation))
-    for i in range(len(data.precipitation)):
+
+    for i in range(len(data["Uganda"])):
         week_number = get_weeknumber(i + 1)
         week_number = 52 if (week_number % 52 == 0) else week_number % 52
-        average_data.precipitation[week_number - 1] += data.precipitation[i]
-        average_data.sickness[week_number - 1] += data.sickness[i]
-        average_data.temperature[week_number - 1] += data.temperature[i]
+        average_data["Uganda"][week_number - 1].rainfall += data["Uganda"][i].rainfall
+        average_data["Uganda"][week_number - 1].disease_cases += data["Uganda"][
+            i
+        ].disease_cases
+        average_data["Uganda"][week_number - 1].temperature += data["Uganda"][
+            i
+        ].temperature
 
     # Calculate averages
-    for i in range(len(average_data.sickness)):
+    for i in range(len(average_data["Uganda"])):
         divider = get_divider(i, data)
-        average_data.precipitation[i] = (average_data.precipitation)[i] / divider
-        average_data.sickness[i] = average_data.sickness[i] / divider
-        average_data.temperature[i] = average_data.temperature[i] / divider
-
+        average_data["Uganda"][i].rainfall = (
+            average_data["Uganda"][i].rainfall / divider
+        )
+        average_data["Uganda"][i].disease_cases = (
+            average_data["Uganda"][i].disease_cases / divider
+        )
+        average_data["Uganda"][i].temperature = (
+            average_data["Uganda"][i].temperature / divider
+        )
     return average_data
 
 
 def get_divider(i, data):
-    decimal, whole_number = math.modf(len(data.precipitation) / 52)
+    decimal, whole_number = math.modf(len(data["Uganda"]) / 52)
     limit = 52 * decimal
     if i < limit:
         return whole_number + 1

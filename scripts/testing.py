@@ -1,9 +1,7 @@
 from mestDS import generate_data, graph, calculate_weekly_averages
 
-data = generate_data(True, 1000)
-graph(
-    data, sickness_enabled=True, temperature_enabled=False, precipitation_enabled=False
-)
+data = generate_data(True, 100, "2024-01-01")
+graph(data, sickness_enabled=True, temperature_enabled=True, precipitation_enabled=True)
 
 average_data = calculate_weekly_averages(data)
 graph(
@@ -12,3 +10,5 @@ graph(
     temperature_enabled=True,
     precipitation_enabled=True,
 )
+
+print(average_data)
