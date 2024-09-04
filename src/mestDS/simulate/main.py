@@ -128,8 +128,6 @@ def calculate_weekly_averages(data):
 
 
 def get_divider(i, data):
-    if data == 0:
-        return 1
     decimal, whole_number = math.modf(len(data.precipitation) / 52)
     limit = 52 * decimal
     if i < limit:
