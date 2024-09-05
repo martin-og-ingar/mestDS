@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "numpy", "matplotlib"]
 build-backend = "hatchling.build"
 [project]
 name = "mestDS"
@@ -15,10 +15,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-[project.dependencies]
-numpy = "*"
-matplotlib = "*"
-chap-core = { url = "git+https://github.com/dhis2/chap-core.git"}
 [project.urls]
 Homepage = "https://github.com/martin-og-ingar/mestDS"
 Issues = "https://github.com/martin-og-ingar/mestDS/issues"
