@@ -15,7 +15,10 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-
+[projectdependencies]
+numpy = "*"
+matplotlib = "*"
+chap-core = { url = "git+https://github.com/dhis2/chap-core.git"}
 [project.urls]
 Homepage = "https://github.com/martin-og-ingar/mestDS"
 Issues = "https://github.com/martin-og-ingar/mestDS/issues"
