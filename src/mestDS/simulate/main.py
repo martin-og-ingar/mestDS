@@ -8,8 +8,8 @@ from climate_health.data import DataSet, PeriodObservation
 from datetime import datetime, timedelta
 
 
-def generate_data(season_enabled, length, start_date, period):
-    data_observation = {"Uganda": []}
+def generate_data(region, season_enabled, length, start_date, period):
+    data_observation = {region: []}
     precipitation = random.randint(0, 100)
     sickness = random.randint(50, 100)
     temperature = random.randint(20, 30)
@@ -20,7 +20,7 @@ def generate_data(season_enabled, length, start_date, period):
         rainfall=precipitation,
         temperature=temperature,
     )
-    data_observation["Uganda"].append(obs)
+    data_observation[region].append(obs)
 
     period = "W" if period is None else period
     delta = TIMEDELTA[period]
@@ -31,7 +31,7 @@ def generate_data(season_enabled, length, start_date, period):
         input = np.array([precipitation, temperature])
         weight = np.array([0.7, 0.3])
         sickness = get_sickness(
-            data_observation["Uganda"][i - 1].disease_cases, input, weight
+            data_observation[region][i - 1].disease_cases, input, weight
         )
         current_date = start_date + (i * delta)
         current_date = datetime.strftime(current_date, DATEFORMAT)
@@ -41,7 +41,7 @@ def generate_data(season_enabled, length, start_date, period):
             rainfall=precipitation,
             temperature=temperature,
         )
-        data_observation["Uganda"].append(obs)
+        data_observation[region].append(obs)
     return data_observation
 
 
@@ -114,43 +114,39 @@ def get_monthnumber(week):
 
 
 # calculate average
-def calculate_weekly_averages(data):
-    average_data = {"Uganda": []}
+def calculate_weekly_averages(data, region):
+    average_data = {region: []}
     for i in range(52):
         obs = Obs(time_period=str(i), disease_cases=0, rainfall=0, temperature=0)
-        average_data["Uganda"].append(obs)
+        average_data[region].append(obs)
 
-    if (len(data["Uganda"])) < 52:
+    if (len(data[region])) < 52:
         raise Exception("Length is under 52, does not calculate average")
 
-    for i in range(len(data["Uganda"])):
+    for i in range(len(data[region])):
         week_number = get_weeknumber(i + 1)
         week_number = 52 if (week_number % 52 == 0) else week_number % 52
-        average_data["Uganda"][week_number - 1].rainfall += data["Uganda"][i].rainfall
-        average_data["Uganda"][week_number - 1].disease_cases += data["Uganda"][
+        average_data[region][week_number - 1].rainfall += data[region][i].rainfall
+        average_data[region][week_number - 1].disease_cases += data[region][
             i
         ].disease_cases
-        average_data["Uganda"][week_number - 1].temperature += data["Uganda"][
-            i
-        ].temperature
+        average_data[region][week_number - 1].temperature += data[region][i].temperature
 
     # Calculate averages
-    for i in range(len(average_data["Uganda"])):
-        divider = get_divider(i, data)
-        average_data["Uganda"][i].rainfall = (
-            average_data["Uganda"][i].rainfall / divider
+    for i in range(len(average_data[region])):
+        divider = get_divider(i, data, region)
+        average_data[region][i].rainfall = average_data[region][i].rainfall / divider
+        average_data[region][i].disease_cases = (
+            average_data[region][i].disease_cases / divider
         )
-        average_data["Uganda"][i].disease_cases = (
-            average_data["Uganda"][i].disease_cases / divider
-        )
-        average_data["Uganda"][i].temperature = (
-            average_data["Uganda"][i].temperature / divider
+        average_data[region][i].temperature = (
+            average_data[region][i].temperature / divider
         )
     return average_data
 
 
-def get_divider(i, data):
-    decimal, whole_number = math.modf(len(data["Uganda"]) / 52)
+def get_divider(i, data, region):
+    decimal, whole_number = math.modf(len(data[region]) / 52)
     limit = 52 * decimal
     if i < limit:
         return whole_number + 1
