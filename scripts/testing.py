@@ -19,5 +19,3 @@ graph(
     temperature_enabled=True,
     precipitation_enabled=True,
 )
-
-print(data)
