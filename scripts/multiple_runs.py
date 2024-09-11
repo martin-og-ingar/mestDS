@@ -15,12 +15,17 @@ def main():
     action = args[0]
     all_data = []
 
+    start_date = datetime.date(2024, 1, 1)
     for i in range(int(action)):
-        start_date = datetime.date(2024, 1, 1)
         data = generate_data(True, 10000, start_date, "W")
         all_data.append(data)
 
         averages = calculate_average(all_data)
+
+        for country, avg_data in averages.items():
+            print(
+                f"Run {i}, Averages: {{'{country}': {{'sickness': {avg_data['sickness']:.2f}, 'rainfall': {avg_data['rainfall']:.2f}, 'temperature': {avg_data['temperature']:.2f}}}}}"
+            )
 
     for country, avg_data in averages.items():
         print(f"Country: {country}")
