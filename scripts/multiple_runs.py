@@ -1,30 +1,62 @@
 from collections import defaultdict
-import datetime
-
+from datetime import datetime
+import argparse
 from numpy import mean
 from mestDS import generate_data, graph, calculate_weekly_averages
 import sys
 
 
+def get_arguments():
+    parser = argparse.ArgumentParser(description="Climate Data generation")
+    parser.add_argument("runs", type=int, help="Number of runs")
+
+    parser.add_argument(
+        "enable_seasonality",
+        type=str,
+        choices=["True", "False"],
+        help="Choose True/False for seasonallity",
+    )
+    parser.add_argument(
+        "start_date", type=str, help="start date is in the format YYYYMMDD"
+    )
+    parser.add_argument(
+        "duration",
+        type=int,
+        help="how many days/weeks/months/years to generate data for",
+    )
+    parser.add_argument(
+        "time_granularity",
+        type=str,
+        choices=["D", "W", "M"],
+        help="How to group the data.",
+    )
+    return parser.parse_args()
+
+
 def main():
-    args = sys.argv[1:]
+    args = get_arguments()
     if not args:
-        print("No arguments provided, Usage: [number of runs] [average]")
+        # print("No arguments provided, Usage: [number of runs] [average]")
         sys.exit(1)
 
-    action = args[0]
+    runs = args.runs
+    enable_seasonality = args.enable_seasonality == "True"
+
+    duration = args.duration
+    start_date = datetime.strptime(args.start_date, "%Y%m%d")
+    time_granularity = args.time_granularity
+
     all_data = []
 
-    start_date = datetime.date(2024, 1, 1)
-    for i in range(int(action)):
-        data = generate_data(True, 10000, start_date, "W")
+    for i in range(int(runs)):
+        data = generate_data(enable_seasonality, start_date, duration, time_granularity)
         all_data.append(data)
 
         averages = calculate_average(all_data)
 
         for country, avg_data in averages.items():
             print(
-                f"Run {i}, Averages: {{'{country}': {{'sickness': {avg_data['sickness']:.2f}, 'rainfall': {avg_data['rainfall']:.2f}, 'temperature': {avg_data['temperature']:.2f}}}}}"
+                f"Run {i+1}, Averages: {{'{country}': {{'sickness': {avg_data['sickness']:.2f}, 'rainfall': {avg_data['rainfall']:.2f}, 'temperature': {avg_data['temperature']:.2f}}}}}"
             )
 
     for country, avg_data in averages.items():
