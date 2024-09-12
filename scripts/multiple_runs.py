@@ -9,6 +9,7 @@ import sys
 def get_arguments():
     parser = argparse.ArgumentParser(description="Climate Data generation")
     parser.add_argument("runs", type=int, help="Number of runs")
+    parser.add_argument("region", type=str, help="Region to generate data for")
 
     parser.add_argument(
         "enable_seasonality",
@@ -40,6 +41,7 @@ def main():
         sys.exit(1)
 
     runs = args.runs
+    region = args.region
     enable_seasonality = args.enable_seasonality == "True"
 
     duration = args.duration
@@ -49,7 +51,9 @@ def main():
     all_data = []
 
     for i in range(int(runs)):
-        data = generate_data(enable_seasonality, start_date, duration, time_granularity)
+        data = generate_data(
+            region, enable_seasonality, start_date, duration, time_granularity
+        )
         all_data.append(data)
 
         averages = calculate_average(all_data)
