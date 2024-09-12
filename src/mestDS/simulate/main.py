@@ -8,7 +8,7 @@ from climate_health.data import DataSet, PeriodObservation
 from datetime import datetime, timedelta
 
 
-def generate_data(season_enabled, length, start_date, period):
+def generate_data(season_enabled, start_date, length, period):
     data_observation = {"Uganda": []}
     precipitation = random.randint(0, 100)
     sickness = random.randint(50, 100)
