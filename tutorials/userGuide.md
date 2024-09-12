@@ -40,11 +40,11 @@ Set the start-date and generate data.
 # Start date will be changed to the format "%date-%month-%Year.
 start_date = datetime.date(2024, 1, 1)
 
-data = generate_data(True, 100, start-date, "W")
+data = generate_data(True, start-date, 100, "W")
 """
 p1: Boolean - Enables/Disables seasonallity.
-p2: Duration of the simulation.
-p3: set start-date.
+p2: set start-date.
+p3: Duration of the simulation.
 p4: Choose format of time-period. Choose between D(date), W(week), M(month)
 """
 
