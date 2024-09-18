@@ -1,11 +1,10 @@
-from collections import defaultdict
 import math
 import random
-from ..classes.ClimateHealthData_module import ClimatHealthData, Obs
+from ..classes.ClimateHealthData_module import Obs
 from ..classes.default_variables import DEFAULT_TEMPERATURES, TIMEDELTA, DATEFORMAT
 import numpy as np
 from climate_health.data import DataSet, PeriodObservation
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 def generate_data(region, season_enabled, start_date, length, period):
