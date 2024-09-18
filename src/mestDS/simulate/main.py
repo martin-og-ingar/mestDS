@@ -41,6 +41,8 @@ def generate_data(region, season_enabled, start_date, length, period):
             temperature=temperature,
         )
         data_observation[region].append(obs)
+
+    print("here? wrong", data_observation)
     return data_observation
 
 
