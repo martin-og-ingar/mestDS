@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 import argparse
+from mestDS.classes.ClimateHealthData_module import toGluonTsFormat, toDataSetFromat
 from numpy import mean
 from mestDS import generate_data, graph, calculate_weekly_averages
 import sys
@@ -50,8 +51,8 @@ def main():
     start_date = datetime.strptime(args.start_date, "%Y%m%d")
     time_granularity = args.time_granularity
 
+    all_data = []
     for reg in regions:
-        all_data = []
         for i in range(int(runs)):
             data = generate_data(
                 reg, enable_seasonality, start_date, duration, time_granularity
@@ -72,6 +73,9 @@ def main():
             print(f"  Average Temperature: {avg_data['temperature']:.2f}")
 
     print("Done")
+    gluonTs = toGluonTsFormat(all_data)
+    print(all_data)
+    print(gluonTs)
 
 
 def calculate_average(data):
