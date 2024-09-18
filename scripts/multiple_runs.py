@@ -58,14 +58,15 @@ def main():
             )
             all_data.append(data)
 
-            averages = calculate_average(all_data)
+            run_averages = calculate_average([data])
 
-            for country, avg_data in averages.items():
+            for country, avg_data in run_averages.items():
                 print(
                     f"Run {i+1}, Averages: {{'{country}': {{'sickness': {avg_data['sickness']:.2f}, 'rainfall': {avg_data['rainfall']:.2f}, 'temperature': {avg_data['temperature']:.2f}}}}}"
                 )
 
-        for country, avg_data in averages.items():
+        cummlative_averages = calculate_average(all_data)
+        for country, avg_data in cummlative_averages.items():
             print(f"Country: {country}")
             print(f"  Average Sickness: {avg_data['sickness']:.2f}")
             print(f"  Average Rainfall: {avg_data['rainfall']:.2f}")
