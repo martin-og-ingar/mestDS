@@ -50,10 +50,6 @@ def getGluonTsFormat():
     start_date = datetime.strptime(args.start_date, "%Y%m%d")
     time_granularity = args.time_granularity
 
-    # Idea is to make #runs. For each run, we loop over each region in the input.
-    # for each region we generate data and store it in a dictionary. When we hve looped over all regions
-    # we convert the dictionary to a DataSet and then to a GluonTS format.
-    # Then we repeat the process for the next run and overwrite the dictionary.
     all_data = {}
     gluon_list = []
     for i in range(int(runs)):
@@ -68,7 +64,6 @@ def getGluonTsFormat():
         gluon = toGluonTsFormat(toDataSet)
         gluon_list.append(gluon)
 
-    print(gluon_list)
     return gluon_list
 
 
