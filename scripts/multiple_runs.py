@@ -50,18 +50,18 @@ def getGluonTsFormat():
     regions = args.regions
     enable_seasonality = args.enable_seasonality == "True"
     rain_season_randomness = args.rain_season_randomness == "True"
-    if rain_season_randomness:
-        rainy_season_1, rainy_season_2 = randomIntervals()
-    else:
-        rainy_season_1, rainy_season_2 = (11, 24), (36, 40)
-
-    duration = args.duration
     start_date = datetime.strptime(args.start_date, "%Y%m%d")
+    duration = args.duration
     time_granularity = args.time_granularity
 
     all_data = {}
     gluon_list = []
     for i in range(int(runs)):
+        if rain_season_randomness:
+            rainy_season_1, rainy_season_2 = randomIntervals()
+        else:
+            rainy_season_1, rainy_season_2 = (11, 24), (36, 40)
+
         for reg in regions:
             all_data[reg] = []
 
