@@ -119,8 +119,6 @@ def main():
             ),
         ],
     }
-    print("DICT")
-    print(observation_dict)
     # Note, can ONLY use toDataSetFromat for one single run. not if the dict contains multiple runs.
     dataset = toDataSetFromat(observation_dict)
     print("DATASET2")
@@ -151,16 +149,6 @@ def calculate_average(data):
             "temperature": avg_temp,
         }
     return averages
-
-
-def merge_observations(input_data: List[Dict[str, List[Obs]]]) -> Dict[str, List[Obs]]:
-    merged_data = {}
-    for run_data in input_data:
-        for region, observation in run_data.items():
-            if region not in merged_data:
-                merged_data[region] = []
-            merged_data[region].extend(observation)
-    return merged_data
 
 
 if __name__ == "__main__":
