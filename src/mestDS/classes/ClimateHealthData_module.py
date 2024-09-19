@@ -23,7 +23,7 @@ class Obs(PeriodObservation):
     temperature: float
 
 
-def toDataSetFromat(dict):
+def toDataSetFormat(dict):
     return DataSet.from_period_observations(dict)
 
 

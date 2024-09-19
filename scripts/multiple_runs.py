@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 import argparse
-from mestDS.classes.ClimateHealthData_module import toGluonTsFormat, toDataSetFromat
+from mestDS.classes.ClimateHealthData_module import toGluonTsFormat, toDataSetFormat
 from numpy import mean
 from mestDS import generate_data
 import sys
@@ -64,7 +64,7 @@ def getGluonTsFormat():
                 reg, enable_seasonality, start_date, duration, time_granularity
             )
             all_data[reg].extend(data[reg])
-        toDataSet = toDataSetFromat(all_data)
+        toDataSet = toDataSetFormat(all_data)
         gluon = toGluonTsFormat(toDataSet)
         gluon_list.append(gluon)
 
