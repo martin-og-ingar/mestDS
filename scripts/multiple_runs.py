@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 import argparse
+import random
 from mestDS.classes.ClimateHealthData_module import toGluonTsFormat, toDataSetFormat
 from numpy import mean
 from mestDS import generate_data
@@ -19,6 +20,9 @@ def get_arguments():
         type=str,
         choices=["True", "False"],
         help="Choose True/False for seasonallity",
+    )
+    parser.add_argument(
+        "rain_season_randomness", type=str, help="Choose True/False for randomness"
     )
     parser.add_argument(
         "start_date", type=str, help="start date is in the format YYYYMMDD"
@@ -45,6 +49,11 @@ def getGluonTsFormat():
     runs = args.runs
     regions = args.regions
     enable_seasonality = args.enable_seasonality == "True"
+    rain_season_randomness = args.rain_season_randomness == "True"
+    if rain_season_randomness:
+        rainy_season_1, rainy_season_2 = randomIntervals()
+    else:
+        rainy_season_1, rainy_season_2 = (11, 24), (36, 40)
 
     duration = args.duration
     start_date = datetime.strptime(args.start_date, "%Y%m%d")
@@ -57,7 +66,13 @@ def getGluonTsFormat():
             all_data[reg] = []
 
             data = generate_data(
-                reg, enable_seasonality, start_date, duration, time_granularity
+                reg,
+                enable_seasonality,
+                rainy_season_1,
+                rainy_season_2,
+                start_date,
+                duration,
+                time_granularity,
             )
             all_data[reg].extend(data[reg])
         toDataSet = toDataSetFormat(all_data)
@@ -67,6 +82,19 @@ def getGluonTsFormat():
     return gluon_list
 
 
+def randomIntervals():
+    rain_season_start = random.randint(8, 18)
+    rain_season_duration = random.randint(6, 10)
+    rainy_season_1 = (rain_season_start, rain_season_start + rain_season_duration)
+
+    rain_season_start2 = random.randint(30, 40)
+    rain_season_duration = random.randint(4, 6)
+    rainy_season_2 = (rain_season_start2, rain_season_start2 + rain_season_duration)
+
+    return rainy_season_1, rainy_season_2
+
+
+# Remove?
 def calculate_average(data):
     agg_sickness = defaultdict(list)
     agg_rainfall = defaultdict(list)
