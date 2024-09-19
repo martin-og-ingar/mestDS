@@ -26,7 +26,11 @@ def generate_data(region, season_enabled, start_date, length, period):
 
     for i in range(1, length):
         precipitation = get_precipitation(season_enabled, i)
+        precipitation += random.randint(-5, 5)
+
         temperature = get_temp(i)
+        temperature += random.randint(-3, 3)
+
         input = np.array([precipitation, temperature])
         weight = np.array([0.7, 0.3])
         sickness = get_sickness(
