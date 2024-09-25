@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 def generate_data(region, season_enabled, start_date, length, period):
     data_observation = {region: []}
     precipitation = random.randint(0, 100)
-    sickness = random.randint(50, 100)
+    sickness = random.randint(599, 600)
     temperature = random.randint(20, 30)
     start_date_formatted = datetime.strftime(start_date, DATEFORMAT)
     obs = Obs(
@@ -29,7 +29,10 @@ def generate_data(region, season_enabled, start_date, length, period):
         precipitation = get_precipitation(season_enabled, i)
         temperature = get_temp(i)
         input = np.array([precipitation, temperature])
-        weight = np.array([0.7, 0.3])
+        w = np.array([0.6, 0.2])
+
+        # ensure the sum of the weights is 1
+        weight = w / np.sum(w)
         sickness = get_sickness(
             data_observation[region][i - 1].disease_cases, input, weight
         )
@@ -82,8 +85,9 @@ def get_temp(week):
 #
 def get_sickness(sickness, input, weight):
     sum = np.dot(input, weight)
-    max_dot = 77.28
-    # min_dot = 6.69
+
+    # if tmp is high,
+    max_dot = (100 * weight[0]) + (24.26 * weight[1])
 
     if sum > 0.75 * max_dot:
         sickness = sickness + random.randint(4, 7)
