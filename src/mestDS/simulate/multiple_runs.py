@@ -1,11 +1,9 @@
 from collections import defaultdict
-from datetime import datetime
 import argparse
 import random
-from mestDS.classes.ClimateHealthData_module import toGluonTsFormat, toDataSetFormat
+from mestDS.classes.ClimateHealthData_module import to_gluonTS_format, to_dataset_format
 from numpy import mean
-from mestDS import generate_data
-import sys
+from .main import generate_data
 
 
 def get_arguments():
@@ -41,29 +39,26 @@ def get_arguments():
     return parser.parse_args()
 
 
-def getGluonTsFormat():
-    args = get_arguments()
-    if not args:
-        sys.exit(1)
+def generate_multiple_datasets(
+    runs,
+    regions,
+    enable_seasonality,
+    rain_season_randomness,
+    start_date,
+    duration,
+    time_granularity,
+):
 
-    runs = args.runs
-    regions = args.regions
-    enable_seasonality = args.enable_seasonality == "True"
-    rain_season_randomness = args.rain_season_randomness == "True"
-    start_date = datetime.strptime(args.start_date, "%Y%m%d")
-    duration = args.duration
-    time_granularity = args.time_granularity
-
-    all_data = {}
-    gluon_list = []
+    all_data = []
     for i in range(int(runs)):
+        current_run = {}
         if rain_season_randomness:
             rainy_season_1, rainy_season_2 = randomIntervals()
         else:
             rainy_season_1, rainy_season_2 = (11, 24), (36, 40)
 
         for reg in regions:
-            all_data[reg] = []
+            current_run[reg] = []
 
             data = generate_data(
                 reg,
@@ -74,12 +69,9 @@ def getGluonTsFormat():
                 duration,
                 time_granularity,
             )
-            all_data[reg].extend(data[reg])
-        toDataSet = toDataSetFormat(all_data)
-        gluon = toGluonTsFormat(toDataSet)
-        gluon_list.append(gluon)
-
-    return gluon_list
+            current_run[reg].extend(data[reg])
+            all_data.append(current_run)
+    return all_data
 
 
 def randomIntervals():
@@ -94,30 +86,14 @@ def randomIntervals():
     return rainy_season_1, rainy_season_2
 
 
-# Remove?
-def calculate_average(data):
-    agg_sickness = defaultdict(list)
-    agg_rainfall = defaultdict(list)
-    agg_temperature = defaultdict(list)
-    for d in data:
-        for country, observations in d.items():
-            for obs in observations:
-                agg_sickness[country].append(obs.disease_cases)
-                agg_rainfall[country].append(obs.rainfall)
-                agg_temperature[country].append(obs.temperature)
-    averages = {}
-    for c in agg_sickness:
-        avg_sick = mean(agg_sickness[c])
-        avg_rain = mean(agg_rainfall[c])
-        avg_temp = mean(agg_temperature[c])
-
-        averages[c] = {
-            "sickness": avg_sick,
-            "rainfall": avg_rain,
-            "temperature": avg_temp,
-        }
-    return averages
+def convert_datasets_to_gluonTS(datasets):
+    converted_data = []
+    for ds in datasets:
+        data_set = to_dataset_format(ds)
+        gluon_data = to_gluonTS_format(data_set)
+        converted_data.append(gluon_data)
+    return converted_data
 
 
 if __name__ == "__main__":
-    getGluonTsFormat()
+    generate_multiple_datasets()
