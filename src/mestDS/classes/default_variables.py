@@ -16,4 +16,4 @@ DEFAULT_TEMPERATURES = [
 ]
 
 TIMEDELTA = {"D": timedelta(days=1), "W": timedelta(weeks=1), "M": timedelta(weeks=4)}
-DATEFORMAT = "%d-%m-%Y"
+DATEFORMAT = "%Y-%m-%d"

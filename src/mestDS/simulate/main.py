@@ -1,14 +1,15 @@
-from collections import defaultdict
 import math
 import random
-from ..classes.ClimateHealthData_module import ClimatHealthData, Obs
+from ..classes.ClimateHealthData_module import Obs
 from ..classes.default_variables import DEFAULT_TEMPERATURES, TIMEDELTA, DATEFORMAT
 import numpy as np
 from climate_health.data import DataSet, PeriodObservation
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
-def generate_data(region, season_enabled, start_date, length, period):
+def generate_data(
+    region, season_enabled, rain_season_1, rain_season_2, start_date, length, period
+):
     data_observation = {region: []}
     precipitation = random.randint(0, 100)
     sickness = random.randint(50, 100)
@@ -26,8 +27,14 @@ def generate_data(region, season_enabled, start_date, length, period):
     delta = TIMEDELTA[period]
 
     for i in range(1, length):
-        precipitation = get_precipitation(season_enabled, i)
+        precipitation = get_precipitation(
+            season_enabled, i, rain_season_1, rain_season_2
+        )
+        precipitation += random.randint(-5, 5)
+
         temperature = get_temp(i)
+        temperature += random.randint(-3, 3)
+
         input = np.array([precipitation, temperature])
         weight = np.array([0.7, 0.3])
         sickness = get_sickness(
@@ -46,9 +53,9 @@ def generate_data(region, season_enabled, start_date, length, period):
 
 
 # Generate precepitation data
-def get_precipitation(season_enabled, week):
+def get_precipitation(season_enabled, week, rain_season_1, rain_season_2):
     if season_enabled == True:
-        rain_prob = get_rain_prob(week)
+        rain_prob = get_rain_prob(week, rain_season_1, rain_season_2)
         r = random.uniform(0.0, 1.00)
         if r < rain_prob:
             rain = random.randint(50, 100)
@@ -61,11 +68,17 @@ def get_precipitation(season_enabled, week):
         return random.randint(0, 100)
 
 
-def get_rain_prob(i):
+# Currently this does only take into account the week, not day/month.
+# pass time_granularity to the func.
+def get_rain_prob(i, rain_season_1, rain_season_2):
     week = get_weeknumber(i)
-    if week > 11 and week < 24:
-        return 0.8
-    elif week > 36 and week < 40:
+    rain_season_1_start, rain_season_1_end = rain_season_1
+    rain_season_2_start, rain_season_2_end = rain_season_2
+
+    if (
+        rain_season_1_start <= week < rain_season_1_end
+        and rain_season_2_start <= week <= rain_season_2_end
+    ):
         return 0.8
     else:
         return 0.4

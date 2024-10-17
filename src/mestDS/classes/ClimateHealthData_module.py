@@ -23,9 +23,9 @@ class Obs(PeriodObservation):
     temperature: float
 
 
-def toDataSetFromat(dict):
+def to_dataset_format(dict):
     return DataSet.from_period_observations(dict)
 
 
-def toGluonTsFormat(data_set):
+def to_gluonTS_format(data_set):
     return adaptors.gluonts.from_dataset(data_set)
