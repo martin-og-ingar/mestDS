@@ -8,7 +8,16 @@ from datetime import datetime
 
 
 def generate_data(
-    region, season_enabled, rain_season_1, rain_season_2, start_date, length, period
+    region,
+    season_enabled,
+    rain_season_1,
+    rain_season_2,
+    start_date,
+    length,
+    period,
+    sp,
+    sa,
+    si,
 ):
     data_observation = {region: []}
     precipitation = random.randint(0, 100)
@@ -38,7 +47,7 @@ def generate_data(
         input = np.array([precipitation, temperature])
         weight = np.array([0.7, 0.3])
         sickness = get_sickness(
-            data_observation[region][i - 1].disease_cases, input, weight
+            data_observation[region][i - 1].disease_cases, input, weight, sp, sa, si
         )
         current_date = start_date + (i * delta)
         current_date = datetime.strftime(current_date, DATEFORMAT)
@@ -93,24 +102,11 @@ def get_temp(week):
 
 # Generate sickness data
 #
-def get_sickness(sickness, input, weight):
+def get_sickness(sickness, input, weight, sp, sa, si):
     sum = np.dot(input, weight)
     max_dot = 77.28
-    # min_dot = 6.69
-
-    if sum > 0.75 * max_dot:
-        sickness = sickness + random.randint(4, 7)
-    elif sum >= 0.5 * max_dot:
-        sickness = sickness + random.randint(0, 4)
-    elif sum < 0.25 * max_dot:
-        sickness = sickness + random.randint(-10, -6)
-    elif sum < 0.5 * max_dot:
-        sickness = sickness + random.randint(-5, 0)
-    if sickness < 3:
-        return random.randint(0, 3)
-    else:
-        sickness = sickness + random.randint(-3, 3)
-        return sickness
+    sickness = sickness + int(np.random.normal((sum / max_dot) - sp, sa) * si)
+    return sickness
 
 
 def get_weeknumber(week):
