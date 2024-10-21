@@ -1,0 +1,21 @@
+name: min_mr_py_ex
+
+adapters: {'disease_cases': 'disease_cases',
+           'location': 'location',
+           'time_period': 'time_period',
+           'rainfall': 'rainfall',
+           'mean_temperature': 'mean_temperature'}
+
+entry_points:
+  train:
+    parameters:
+      train_data: path
+      model: str
+    command: "python train.py {train_data} {model}"
+  predict:
+    parameters:
+      historic_data: path
+      future_data: path
+      model: str
+      out_file: path
+    command: "python predict.py {model} {historic_data} {future_data} {out_file}"
