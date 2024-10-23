@@ -67,16 +67,14 @@ def generate_data(
 
 # Generate precepitation data
 def get_precipitation(season_enabled, rain_season):
-    if season_enabled == True:
-        rain_prob = get_rain_prob(rain_season)
-        r = random.uniform(0.0, 1.00)
-        if r < rain_prob:
-            rain = random.randint(50, 100)
-        else:
-            # contraint the decrease of rain during non-rainy season.
-            rain = random.randint(15, 24)
-    else:
-        rain = random.randint(0, 100)
+    # possible to pass in as argument
+    shape, scale = (
+        (5, 20)
+        if rain_season and season_enabled
+        else (0.5, 20) if season_enabled else (5, 5)
+    )
+
+    rain = np.random.gamma(shape, scale)
 
     rain += random.randint(-5, 5)
     return rain
