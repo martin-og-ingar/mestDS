@@ -28,7 +28,8 @@ def generate_data(
         time_period=start_date_formatted,
         disease_cases=sickness,
         rainfall=precipitation,
-        temperature=temperature,
+        mean_temperature=temperature,
+        population=10000,
     )
     data_observation[region].append(obs)
 
@@ -59,7 +60,8 @@ def generate_data(
             time_period=current_date,
             disease_cases=sickness,
             rainfall=precipitation,
-            temperature=temperature,
+            mean_temperature=temperature,
+            population=10000,
         )
         data_observation[region].append(obs)
     return data_observation
