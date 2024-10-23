@@ -8,7 +8,16 @@ from datetime import datetime
 
 
 def generate_data(
-    region, season_enabled, rain_season_1, rain_season_2, start_date, length, period
+    region,
+    season_enabled,
+    rain_season_1,
+    rain_season_2,
+    start_date,
+    length,
+    period,
+    sp,
+    sa,
+    si,
 ):
     data_observation = {region: []}
     precipitation = random.randint(0, 100)
@@ -27,18 +36,22 @@ def generate_data(
     delta = TIMEDELTA[period]
 
     for i in range(1, length):
-        precipitation = get_precipitation(
-            season_enabled, i, rain_season_1, rain_season_2
-        )
-        precipitation += random.randint(-5, 5)
+        week_number = get_weeknumber(i)
+        rain_season = is_rain_season(week_number, rain_season_1, rain_season_2)
 
-        temperature = get_temp(i)
-        temperature += random.randint(-3, 3)
+        precipitation = get_precipitation(season_enabled, rain_season)
+        temperature = get_temp(week_number)
 
         input = np.array([precipitation, temperature])
         weight = np.array([0.7, 0.3])
         sickness = get_sickness(
-            data_observation[region][i - 1].disease_cases, input, weight
+            data_observation[region][i - 1].disease_cases,
+            input,
+            weight,
+            sp,
+            sa,
+            si,
+            rain_season,
         )
         current_date = start_date + (i * delta)
         current_date = datetime.strftime(current_date, DATEFORMAT)
@@ -53,32 +66,26 @@ def generate_data(
 
 
 # Generate precepitation data
-def get_precipitation(season_enabled, week, rain_season_1, rain_season_2):
+def get_precipitation(season_enabled, rain_season):
     if season_enabled == True:
-        rain_prob = get_rain_prob(week, rain_season_1, rain_season_2)
+        rain_prob = get_rain_prob(rain_season)
         r = random.uniform(0.0, 1.00)
         if r < rain_prob:
             rain = random.randint(50, 100)
-            return rain
         else:
             # contraint the decrease of rain during non-rainy season.
             rain = random.randint(15, 24)
-            return rain
     else:
-        return random.randint(0, 100)
+        rain = random.randint(0, 100)
+
+    rain += random.randint(-5, 5)
+    return rain
 
 
 # Currently this does only take into account the week, not day/month.
 # pass time_granularity to the func.
-def get_rain_prob(i, rain_season_1, rain_season_2):
-    week = get_weeknumber(i)
-    rain_season_1_start, rain_season_1_end = rain_season_1
-    rain_season_2_start, rain_season_2_end = rain_season_2
-
-    if (
-        rain_season_1_start <= week < rain_season_1_end
-        and rain_season_2_start <= week <= rain_season_2_end
-    ):
+def get_rain_prob(rain_season):
+    if rain_season:
         return 0.8
     else:
         return 0.4
@@ -86,31 +93,23 @@ def get_rain_prob(i, rain_season_1, rain_season_2):
 
 # Generate temperature data
 def get_temp(week):
-    week = get_weeknumber(week)
     month = get_monthnumber(week)
-    return DEFAULT_TEMPERATURES[month]
+    temperature = DEFAULT_TEMPERATURES[month]
+    temperature += random.randint(-3, 3)
+    return temperature
 
 
 # Generate sickness data
 #
-def get_sickness(sickness, input, weight):
+def get_sickness(sickness, input, weight, sp, sa, si, rain_season):
     sum = np.dot(input, weight)
     max_dot = 77.28
-    # min_dot = 6.69
+    # random_noise = np.clip(np.random.normal((sum / max_dot) - sp, sa), -3, 3)
+    # sickness = sickness + int(random_noise * si)
+    sickness = sickness + int(np.random.normal((sum / max_dot) - sp, sa) * si)
+    sickness = max(min(sickness, 1000), 1)
 
-    if sum > 0.75 * max_dot:
-        sickness = sickness + random.randint(4, 7)
-    elif sum >= 0.5 * max_dot:
-        sickness = sickness + random.randint(0, 4)
-    elif sum < 0.25 * max_dot:
-        sickness = sickness + random.randint(-10, -6)
-    elif sum < 0.5 * max_dot:
-        sickness = sickness + random.randint(-5, 0)
-    if sickness < 3:
-        return random.randint(0, 3)
-    else:
-        sickness = sickness + random.randint(-3, 3)
-        return sickness
+    return sickness
 
 
 def get_weeknumber(week):
@@ -165,3 +164,9 @@ def get_divider(i, data, region):
         return whole_number + 1
     else:
         return whole_number
+
+
+def is_rain_season(week, rainy_season_1, rainy_season_2):
+    return (rainy_season_1[0] <= week <= rainy_season_1[1]) or (
+        rainy_season_2[0] <= week <= rainy_season_2[1]
+    )

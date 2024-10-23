@@ -40,37 +40,51 @@ def get_arguments():
 
 
 def generate_multiple_datasets(
-    runs,
     regions,
     enable_seasonality,
     rain_season_randomness,
     start_date,
     duration,
     time_granularity,
+    sickness_pessimism,
+    sickness_agressiveness,
+    sickness_increase,
 ):
 
     all_data = []
-    for i in range(int(runs)):
-        current_run = {}
-        if rain_season_randomness:
-            rainy_season_1, rainy_season_2 = randomIntervals()
-        else:
-            rainy_season_1, rainy_season_2 = (11, 24), (36, 40)
+    for sp in sickness_pessimism:
+        for sa in sickness_agressiveness:
+            for si in sickness_increase:
+                # current_run = {}
+                if rain_season_randomness:
+                    rainy_season_1, rainy_season_2 = randomIntervals()
+                else:
+                    rainy_season_1, rainy_season_2 = (11, 24), (36, 40)
 
-        for reg in regions:
-            current_run[reg] = []
+                for reg in regions:
+                    # current_run[reg] = []
 
-            data = generate_data(
-                reg,
-                enable_seasonality,
-                rainy_season_1,
-                rainy_season_2,
-                start_date,
-                duration,
-                time_granularity,
-            )
-            current_run[reg].extend(data[reg])
-            all_data.append(current_run)
+                    data = generate_data(
+                        reg,
+                        enable_seasonality,
+                        rainy_season_1,
+                        rainy_season_2,
+                        start_date,
+                        duration,
+                        time_granularity,
+                        sp,
+                        sa,
+                        si,
+                    )
+                    # current_run[reg].extend(data[reg])
+                    current_run_with_parameters = {
+                        "sp": sp,
+                        "sa": sa,
+                        "si": si,
+                        "data": data,
+                        "region": reg,
+                    }
+                    all_data.append(current_run_with_parameters)
     return all_data
 
 
@@ -89,7 +103,7 @@ def randomIntervals():
 def convert_datasets_to_gluonTS(datasets):
     converted_data = []
     for ds in datasets:
-        data_set = to_dataset_format(ds)
+        data_set = to_dataset_format(ds["data"])
         gluon_data = to_gluonTS_format(data_set)
         converted_data.append(gluon_data)
     return converted_data
