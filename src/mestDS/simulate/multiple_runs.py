@@ -61,30 +61,28 @@ def generate_multiple_datasets(
                 else:
                     rainy_season_1, rainy_season_2 = (11, 24), (36, 40)
 
-                for reg in regions:
                     # current_run[reg] = []
 
-                    data = generate_data(
-                        reg,
-                        enable_seasonality,
-                        rainy_season_1,
-                        rainy_season_2,
-                        start_date,
-                        duration,
-                        time_granularity,
-                        sp,
-                        sa,
-                        si,
-                    )
-                    # current_run[reg].extend(data[reg])
-                    current_run_with_parameters = {
-                        "sp": sp,
-                        "sa": sa,
-                        "si": si,
-                        "data": data,
-                        "region": reg,
-                    }
-                    all_data.append(current_run_with_parameters)
+                data = generate_data(
+                    regions,
+                    enable_seasonality,
+                    rainy_season_1,
+                    rainy_season_2,
+                    start_date,
+                    duration,
+                    time_granularity,
+                    sp,
+                    sa,
+                    si,
+                )
+                # current_run[reg].extend(data[reg])
+                current_run_with_parameters = {
+                    "sp": sp,
+                    "sa": sa,
+                    "si": si,
+                    "data": data,
+                }
+                all_data.append(current_run_with_parameters)
     return all_data
 
 
