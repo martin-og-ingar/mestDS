@@ -9,9 +9,4 @@ def evaluate_chap_model(datasets):
     for dataset in datasets:
         print(dataset["data"])
         data = DataSet.from_period_observations(dataset["data"])
-        evaluate_model(
-            model,
-            data,
-            prediction_length=3,
-            n_test_sets=1,
-        )
+        evaluate_model(model, data, report_filename="test.pdf")

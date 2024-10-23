@@ -11,6 +11,6 @@ sp = [0.5]
 sa = [0.3]
 si = [10]
 multiple_data = generate_multiple_datasets(
-    ["Uganda"], True, True, start_date, 10, "D", sp, sa, si
+    ["Uganda", "Oslo"], True, True, start_date, 10, "D", sp, sa, si
 )
 evaluate_chap_model(multiple_data)
