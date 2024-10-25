@@ -73,20 +73,12 @@ def get_precipitation(season_enabled, rain_season):
         if rain_season and season_enabled
         else (0.5, 20) if season_enabled else (5, 5)
     )
-
+    # shape, determines shape/skewness of the distribution. Small leads to more zero-values. larger yields a bell-shaped curve.
+    # scale, determines the spread/average value of the distribution. Small leads to a narrow distribution, large to a wide distribution.
     rain = np.random.gamma(shape, scale)
 
     rain += random.randint(-5, 5)
     return rain
-
-
-# Currently this does only take into account the week, not day/month.
-# pass time_granularity to the func.
-def get_rain_prob(rain_season):
-    if rain_season:
-        return 0.8
-    else:
-        return 0.4
 
 
 # Generate temperature data
