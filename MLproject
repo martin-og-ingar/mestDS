@@ -1,11 +1,5 @@
 name: min_mr_py_ex
 
-adapters: {'disease_cases': 'disease_cases',
-           'location': 'location',
-           'time_period': 'time_period',
-           'rainfall': 'rainfall',
-           'mean_temperature': 'mean_temperature'}
-
 entry_points:
   train:
     parameters:
