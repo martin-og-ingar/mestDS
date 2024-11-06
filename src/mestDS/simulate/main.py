@@ -67,28 +67,19 @@ def generate_data(
 
 # Generate precepitation data
 def get_precipitation(season_enabled, rain_season):
-    if season_enabled == True:
-        rain_prob = get_rain_prob(rain_season)
-        r = random.uniform(0.0, 1.00)
-        if r < rain_prob:
-            rain = random.randint(50, 100)
-        else:
-            # contraint the decrease of rain during non-rainy season.
-            rain = random.randint(15, 24)
+    # use gamma if seasons are enabled.
+    noise = np.random.randint(-5, 5)
+    if rain_season and season_enabled:
+        shape, scale = (10, 7)
+    elif season_enabled:
+        shape, scale = (8, 2)
     else:
-        rain = random.randint(0, 100)
+        rain = np.random.uniform(0, 120)
+        return max(0, rain + noise)
+    rain = np.random.gamma(shape, scale)
 
-    rain += random.randint(-5, 5)
+    rain = max(0, rain + noise)
     return rain
-
-
-# Currently this does only take into account the week, not day/month.
-# pass time_granularity to the func.
-def get_rain_prob(rain_season):
-    if rain_season:
-        return 0.8
-    else:
-        return 0.4
 
 
 # Generate temperature data

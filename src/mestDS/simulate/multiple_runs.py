@@ -94,8 +94,8 @@ def randomIntervals():
     rainy_season_1 = (rain_season_start, rain_season_start + rain_season_duration)
 
     rain_season_start2 = random.randint(30, 40)
-    rain_season_duration = random.randint(4, 6)
-    rainy_season_2 = (rain_season_start2, rain_season_start2 + rain_season_duration)
+    rain_season_duration_2 = random.randint(4, 6)
+    rainy_season_2 = (rain_season_start2, rain_season_start2 + rain_season_duration_2)
 
     return rainy_season_1, rainy_season_2
 
