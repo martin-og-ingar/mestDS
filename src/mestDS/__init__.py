@@ -5,3 +5,4 @@ from .simulate import (
     convert_datasets_to_gluonTS,
 )
 from .visualize import graph
+from .evaluate import evaluate_chap_model

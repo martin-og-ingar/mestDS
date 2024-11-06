@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 def generate_data(
-    region,
+    regions,
     season_enabled,
     rain_season_1,
     rain_season_2,
@@ -19,49 +19,52 @@ def generate_data(
     sa,
     si,
 ):
-    data_observation = {region: []}
-    precipitation = random.randint(0, 100)
-    sickness = random.randint(50, 100)
-    temperature = random.randint(20, 30)
-    start_date_formatted = datetime.strftime(start_date, DATEFORMAT)
-    obs = Obs(
-        time_period=start_date_formatted,
-        disease_cases=sickness,
-        rainfall=precipitation,
-        temperature=temperature,
-    )
-    data_observation[region].append(obs)
-
-    period = "W" if period is None else period
-    delta = TIMEDELTA[period]
-
-    for i in range(1, length):
-        week_number = get_weeknumber(i)
-        rain_season = is_rain_season(week_number, rain_season_1, rain_season_2)
-
-        precipitation = get_precipitation(season_enabled, rain_season)
-        temperature = get_temp(week_number)
-
-        input = np.array([precipitation, temperature])
-        weight = np.array([0.7, 0.3])
-        sickness = get_sickness(
-            data_observation[region][i - 1].disease_cases,
-            input,
-            weight,
-            sp,
-            sa,
-            si,
-            rain_season,
-        )
-        current_date = start_date + (i * delta)
-        current_date = datetime.strftime(current_date, DATEFORMAT)
+    data_observation = {region: [] for region in regions}
+    for region in regions:
+        precipitation = random.randint(0, 100)
+        sickness = random.randint(50, 100)
+        temperature = random.randint(20, 30)
+        start_date_formatted = datetime.strftime(start_date, DATEFORMAT)
         obs = Obs(
-            time_period=current_date,
+            time_period=start_date_formatted,
             disease_cases=sickness,
             rainfall=precipitation,
-            temperature=temperature,
+            mean_temperature=temperature,
+            population=10000,
         )
         data_observation[region].append(obs)
+
+        period = "W" if period is None else period
+        delta = TIMEDELTA[period]
+
+        for i in range(1, length):
+            week_number = get_weeknumber(i)
+            rain_season = is_rain_season(week_number, rain_season_1, rain_season_2)
+
+            precipitation = get_precipitation(season_enabled, rain_season)
+            temperature = get_temp(week_number)
+
+            input = np.array([precipitation, temperature])
+            weight = np.array([0.7, 0.3])
+            sickness = get_sickness(
+                data_observation[region][i - 1].disease_cases,
+                input,
+                weight,
+                sp,
+                sa,
+                si,
+                rain_season,
+            )
+            current_date = start_date + (i * delta)
+            current_date = datetime.strftime(current_date, DATEFORMAT)
+            obs = Obs(
+                time_period=current_date,
+                disease_cases=sickness,
+                rainfall=precipitation,
+                mean_temperature=temperature,
+                population=10000,
+            )
+            data_observation[region].append(obs)
     return data_observation
 
 

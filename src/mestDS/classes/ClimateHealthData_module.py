@@ -18,9 +18,10 @@ class ClimatHealthData:
 
 
 class Obs(PeriodObservation):
+    population: int
     disease_cases: int
     rainfall: float
-    temperature: float
+    mean_temperature: float
 
 
 def to_dataset_format(dict):
