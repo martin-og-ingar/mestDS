@@ -1,8 +1,7 @@
 import math
 import random
 from ..classes.ClimateHealthData_module import Obs
-from ..classes.SimulationInput import DEFAULT_TEMPERATURES, TIMEDELTA, DATEFORMAT
-
+from ..default_variables import DATEFORMAT, TIMEDELTA, DEFAULT_TEMPERATURES
 import numpy as np
 from chap_core.data import DataSet, PeriodObservation
 from datetime import datetime

@@ -1,45 +1,16 @@
-from typing import Dict, List, Literal
+from typing import Dict, Literal
 import datetime
+
+from mestDS.visualize.main import graph
 from .ClimateHealthData_module import Obs
+from .RainSeason import RainSeason
 from chap_core.assessment.prediction_evaluator import evaluate_model
 from chap_core.spatio_temporal_data.temporal_dataclass import DataSet
-
-DEFAULT_TEMPERATURES = [
-    23.72,
-    24.26,
-    24.25,
-    23.71,
-    23.18,
-    22.67,
-    22.31,
-    22.68,
-    22.86,
-    23.16,
-    23.21,
-    23.03,
-]
-
-TIMEDELTA = {
-    "D": datetime.timedelta(days=1),
-    "W": datetime.timedelta(weeks=1),
-    "M": datetime.timedelta(weeks=4),
-}
-DATEFORMAT = "%Y-%m-%d"
-
-
-DEFAULT_REGIONS = ["Masindi", "Apac"]
-
-
-class RainSeason:
-    start: int
-    end: int
-
-    def __init__(self, start, end):
-        self.start = start
-        self.end = end
-
-
-DEFAULT_RAIN_SEASON = [RainSeason(start=12, end=23), RainSeason(start=36, end=40)]
+from ..default_variables import (
+    DEFAULT_RAIN_SEASON,
+    DEFAULT_REGIONS,
+    DEFAULT_TEMPERATURES,
+)
 
 
 class Simulation:
@@ -54,9 +25,16 @@ class Simulation:
     : param rain_season: The rain season of the simulation. Default is DEFAULT_RAIN_SEASON.
     : param temperatures: The temperatures of the simulation. Default is DEFAULT_TEMPERATURES.
     : param regions: The regions of the simulation. Default is DEFAULT_REGIONS.
+
+    New sickness values per iteration in the simulation is calculated as follows:
+        dot = dot product of (rain, temperature) and (rain weight, temperature weight)
+        max_dot = highest possible dot product
+        sickness = sickness + np.random.normal((dot / max_dot) - normal_dist_mean, normal_dist_stddev) * nomral_dist_scale)
+
     : param normal_dist_mean: The mean of the normal distribution. Default is 0.5.
     : param normal_dist_stddev: The standard deviation of the normal distribution. Default is 0.3.
     : param normal_dist_scale: The scale of the normal distribution. Default is 10.
+
     : param simulated_data: The simulated data. Default is None.
 
     """
@@ -104,5 +82,8 @@ class Simulation:
     def chap_evaluation_on_model(self, model, prediction_lenght=5):
         data = DataSet.from_period_observations(self.simulated_data)
         evaluate_model(
-            model, data, report_filename="test.pdf", prediction_lenght=prediction_lenght
+            model, data, report_filename="test.pdf", prediction_length=prediction_lenght
         )
+
+    def show_graph(self, show_rain=False, show_temperature=False, show_sickness=True):
+        graph(self, show_rain, show_temperature, show_sickness)
