@@ -1,30 +1,23 @@
 import math
 import random
 from ..classes.ClimateHealthData_module import Obs
-from ..classes.default_variables import DEFAULT_TEMPERATURES, TIMEDELTA, DATEFORMAT
+from ..classes.SimulationInput import DEFAULT_TEMPERATURES, TIMEDELTA, DATEFORMAT
+
 import numpy as np
 from climate_health.data import DataSet, PeriodObservation
 from datetime import datetime
+from ..classes.SimulationInput import Simulation, RainSeason
 
 
-def generate_data(
-    regions,
-    season_enabled,
-    rain_season_1,
-    rain_season_2,
-    start_date,
-    length,
-    period,
-    sp,
-    sa,
-    si,
-):
-    data_observation = {region: [] for region in regions}
-    for region in regions:
+def generate_data(simulation: Simulation):
+    data_observation = {region: [] for region in simulation.regions}
+    for region in simulation.regions:
         precipitation = random.randint(0, 100)
         sickness = random.randint(50, 100)
         temperature = random.randint(20, 30)
-        start_date_formatted = datetime.strftime(start_date, DATEFORMAT)
+        start_date_formatted = datetime.strftime(
+            simulation.simulation_start_date, DATEFORMAT
+        )
         obs = Obs(
             time_period=start_date_formatted,
             disease_cases=sickness,
@@ -34,14 +27,13 @@ def generate_data(
         )
         data_observation[region].append(obs)
 
-        period = "W" if period is None else period
-        delta = TIMEDELTA[period]
+        delta = TIMEDELTA[simulation.time_granularity]
 
-        for i in range(1, length):
+        for i in range(1, simulation.simulation_length):
             week_number = get_weeknumber(i)
-            rain_season = is_rain_season(week_number, rain_season_1, rain_season_2)
+            rain_season = is_rain_season(week_number, simulation.rain_season)
 
-            precipitation = get_precipitation(season_enabled, rain_season)
+            precipitation = get_precipitation(rain_season)
             temperature = get_temp(week_number)
 
             input = np.array([precipitation, temperature])
@@ -50,12 +42,11 @@ def generate_data(
                 data_observation[region][i - 1].disease_cases,
                 input,
                 weight,
-                sp,
-                sa,
-                si,
-                rain_season,
+                simulation.normal_dist_mean,
+                simulation.normal_dist_stddev,
+                simulation.nomral_dist_scale,
             )
-            current_date = start_date + (i * delta)
+            current_date = simulation.simulation_start_date + (i * delta)
             current_date = datetime.strftime(current_date, DATEFORMAT)
             obs = Obs(
                 time_period=current_date,
@@ -69,16 +60,13 @@ def generate_data(
 
 
 # Generate precepitation data
-def get_precipitation(season_enabled, rain_season):
+def get_precipitation(rain_season):
     # use gamma if seasons are enabled.
     noise = np.random.randint(-5, 5)
-    if rain_season and season_enabled:
+    if rain_season:
         shape, scale = (10, 7)
-    elif season_enabled:
-        shape, scale = (8, 2)
     else:
-        rain = np.random.uniform(0, 120)
-        return max(0, rain + noise)
+        shape, scale = (8, 2)
     rain = np.random.gamma(shape, scale)
 
     rain = max(0, rain + noise)
@@ -95,7 +83,7 @@ def get_temp(week):
 
 # Generate sickness data
 #
-def get_sickness(sickness, input, weight, sp, sa, si, rain_season):
+def get_sickness(sickness, input, weight, sp, sa, si):
     sum = np.dot(input, weight)
     max_dot = 77.28
     # random_noise = np.clip(np.random.normal((sum / max_dot) - sp, sa), -3, 3)
@@ -160,7 +148,9 @@ def get_divider(i, data, region):
         return whole_number
 
 
-def is_rain_season(week, rainy_season_1, rainy_season_2):
-    return (rainy_season_1[0] <= week <= rainy_season_1[1]) or (
-        rainy_season_2[0] <= week <= rainy_season_2[1]
-    )
+def is_rain_season(week, rain_seasons):
+
+    for season in rain_seasons:
+        if season.start <= week <= season.end:
+            return True
+    return False

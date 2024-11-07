@@ -1,12 +1,33 @@
-from typing import Literal
+from typing import Dict, List, Literal
 import datetime
-from .default_variables import (
-    DEFAULT_RAIN_SEASON,
-    DEFAULT_TEMPERATURES,
-    DEFAULT_REGIONS,
-)
 from .ClimateHealthData_module import Obs
-from ..simulate import generate_data
+from chap_core.assessment.prediction_evaluator import evaluate_model
+from chap_core.spatio_temporal_data.temporal_dataclass import DataSet
+
+DEFAULT_TEMPERATURES = [
+    23.72,
+    24.26,
+    24.25,
+    23.71,
+    23.18,
+    22.67,
+    22.31,
+    22.68,
+    22.86,
+    23.16,
+    23.21,
+    23.03,
+]
+
+TIMEDELTA = {
+    "D": datetime.timedelta(days=1),
+    "W": datetime.timedelta(weeks=1),
+    "M": datetime.timedelta(weeks=4),
+}
+DATEFORMAT = "%Y-%m-%d"
+
+
+DEFAULT_REGIONS = ["Masindi", "Apac"]
 
 
 class RainSeason:
@@ -18,7 +39,28 @@ class RainSeason:
         self.end = end
 
 
+DEFAULT_RAIN_SEASON = [RainSeason(start=12, end=23), RainSeason(start=36, end=40)]
+
+
 class Simulation:
+    """
+    Class for initializing simulation parameters with default values.
+    It also contains two function for simulating data and evaluating the simulated data
+    on a selected model.
+
+    : param time_granularity: The time granularity of the simulation. Default is "D" for daily.
+    : param simulation_length: The length of the simulation. Default is 500.
+    : param simulation_start_date: The start date of the simulation. Default is 2024-01-01.
+    : param rain_season: The rain season of the simulation. Default is DEFAULT_RAIN_SEASON.
+    : param temperatures: The temperatures of the simulation. Default is DEFAULT_TEMPERATURES.
+    : param regions: The regions of the simulation. Default is DEFAULT_REGIONS.
+    : param normal_dist_mean: The mean of the normal distribution. Default is 0.5.
+    : param normal_dist_stddev: The standard deviation of the normal distribution. Default is 0.3.
+    : param normal_dist_scale: The scale of the normal distribution. Default is 10.
+    : param simulated_data: The simulated data. Default is None.
+
+    """
+
     time_granularity: Literal["D", "W", "M"]
     simulation_length: int
     simulation_start_date: datetime.date
@@ -29,7 +71,7 @@ class Simulation:
     normal_dist_mean: float
     normal_dist_stddev: float
     nomral_dist_scale: float
-    simulated_data: Obs
+    simulated_data: Dict[str, list[Obs]]
 
     def __init__(
         self,
@@ -55,7 +97,12 @@ class Simulation:
         self.simulated_data = None
 
     def simulate(self):
+        from ..simulate import generate_data
+
         self.simulated_data = generate_data(self)
 
-    def chap_evaluation_on_model(self, model):
-        evaluate_model(model, self.simulated_data)
+    def chap_evaluation_on_model(self, model, prediction_lenght=5):
+        data = DataSet.from_period_observations(self.simulated_data)
+        evaluate_model(
+            model, data, report_filename="test.pdf", prediction_lenght=prediction_lenght
+        )

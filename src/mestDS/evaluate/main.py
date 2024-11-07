@@ -7,6 +7,5 @@ from ..classes.ClimateHealthData_module import to_gluonTS_format
 def evaluate_chap_model(datasets):
     model = registry.get_model("chap_ewars_monthly")
     for dataset in datasets:
-        print(dataset["data"])
-        data = DataSet.from_period_observations(dataset["data"])
+        data = DataSet.from_period_observations(dataset)
         evaluate_model(model, data, report_filename="test.pdf")
