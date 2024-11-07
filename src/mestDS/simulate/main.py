@@ -4,7 +4,7 @@ from ..classes.ClimateHealthData_module import Obs
 from ..classes.SimulationInput import DEFAULT_TEMPERATURES, TIMEDELTA, DATEFORMAT
 
 import numpy as np
-from climate_health.data import DataSet, PeriodObservation
+from chap_core.data import DataSet, PeriodObservation
 from datetime import datetime
 from ..classes.SimulationInput import Simulation, RainSeason
 
