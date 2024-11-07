@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+from mestDS.classes.SimulationInput import RainSeason
+
 DEFAULT_TEMPERATURES = [
     23.72,
     24.26,
@@ -17,3 +19,7 @@ DEFAULT_TEMPERATURES = [
 
 TIMEDELTA = {"D": timedelta(days=1), "W": timedelta(weeks=1), "M": timedelta(weeks=4)}
 DATEFORMAT = "%Y-%m-%d"
+
+DEFAULT_RAIN_SEASON = [RainSeason(start=12, end=23), RainSeason(start=36, end=40)]
+
+DEFAULT_REGIONS = ["Masindi", "Apac"]

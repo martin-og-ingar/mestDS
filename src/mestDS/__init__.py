@@ -6,3 +6,4 @@ from .simulate import (
 )
 from .visualize import graph
 from .evaluate import evaluate_chap_model
+from .classes import RainSeason, Simulation
