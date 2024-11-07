@@ -2,7 +2,7 @@ from typing import Dict, Literal
 import datetime
 
 from mestDS.visualize.main import graph
-from .ClimateHealthData_module import Obs
+from .ClimateHealthData import Obs
 from .RainSeason import RainSeason
 from chap_core.assessment.prediction_evaluator import evaluate_model
 from chap_core.spatio_temporal_data.temporal_dataclass import DataSet

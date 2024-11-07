@@ -1,11 +1,11 @@
 import math
 import random
-from ..classes.ClimateHealthData_module import Obs
+from ..classes.ClimateHealthData import Obs
 from ..default_variables import DATEFORMAT, TIMEDELTA, DEFAULT_TEMPERATURES
 import numpy as np
 from chap_core.data import DataSet, PeriodObservation
 from datetime import datetime
-from ..classes.SimulationInput import Simulation, RainSeason
+from ..classes.Simulation import Simulation, RainSeason
 
 
 def generate_data(simulation: Simulation):

@@ -1,7 +1,7 @@
 from collections import defaultdict
 import argparse
 import random
-from mestDS.classes.ClimateHealthData_module import to_gluonTS_format, to_dataset_format
+from mestDS.classes.ClimateHealthData import to_gluonTS_format, to_dataset_format
 from numpy import mean
 from .main import generate_data
 

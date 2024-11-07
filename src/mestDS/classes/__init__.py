@@ -1,2 +1,2 @@
-from .SimulationInput import Simulation
-from .SimulationInput import RainSeason
+from .Simulation import Simulation
+from .Simulation import RainSeason
