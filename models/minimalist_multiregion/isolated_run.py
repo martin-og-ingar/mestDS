@@ -1,4 +1,4 @@
-from predict import predict
+from models.minimalist_multiregion.predict import predict
 from test.train import train
 
 train("input/trainData.csv", "output/model.bin")
