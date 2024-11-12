@@ -4,7 +4,7 @@ import datetime
 
 
 def graph(data, show_rain=False, show_temperature=False, show_sickness=True):
-    from mestDS.classes.SimulationInput import DATEFORMAT, TIMEDELTA
+    from mestDS.classes.Simulation import DATEFORMAT, TIMEDELTA
 
     num_plots = sum([show_rain, show_temperature, show_sickness])
     fig, axes = plt.subplots(num_plots, 1, figsize=(10, 5 * num_plots), sharex=True)
