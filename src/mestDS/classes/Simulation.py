@@ -69,8 +69,8 @@ class Simulation:
         # normal_dist_stddev=0.3,
         # normal_dist_scale=10,
         beta_rainfall=0.2,
-        beta_temp=0.9,
-        beta_lag_sickness=0.8,
+        beta_temp=0.1,
+        beta_lag_sickness=0.7,
         noise_std=0.3,
     ):
         self.time_granularity = time_granularity

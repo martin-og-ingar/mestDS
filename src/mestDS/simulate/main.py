@@ -199,8 +199,8 @@ def get_disease_cases_new(
     noise = np.random.laplace(0, noise_std)
 
     sickness = (
-        intercept
-        + beta_rainfall * rainfall
+        #        intercept
+        beta_rainfall * rainfall
         + beta_temp * temperature
         + beta_lag_sickness * prev_sickness
         + noise
