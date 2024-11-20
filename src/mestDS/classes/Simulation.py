@@ -47,10 +47,15 @@ class Simulation:
     rain_season_randomness: bool
     temperatures: list[float]
     regions: list[str]
-    normal_dist_mean: float
-    normal_dist_stddev: float
-    nomral_dist_scale: float
     simulated_data: Dict[str, list[Obs]]
+    beta_rainfall: float
+    beta_temp: float
+    beta_lag_sickness: float
+    noise_std: float
+
+    # normal_dist_mean: float
+    # normal_dist_stddev: float
+    # nomral_dist_scale: float
 
     def __init__(
         self,
@@ -60,10 +65,13 @@ class Simulation:
         rain_season=None,
         temperatures=DEFAULT_TEMPERATURES,
         regions=DEFAULT_REGIONS,
-        normal_dist_mean=0.5,
-        normal_dist_stddev=0.3,
-        normal_dist_scale=10,
-        use_sickness_history=True,
+        # normal_dist_mean=0.5,
+        # normal_dist_stddev=0.3,
+        # normal_dist_scale=10,
+        beta_rainfall=0.2,
+        beta_temp=0.1,
+        beta_lag_sickness=0.7,
+        noise_std=0.3,
     ):
         self.time_granularity = time_granularity
         self.simulation_length = simulation_length
@@ -71,11 +79,16 @@ class Simulation:
         self.rain_season = rain_season or DEFAULT_RAIN_SEASON
         self.temperatures = temperatures
         self.regions = regions
-        self.normal_dist_mean = normal_dist_mean
-        self.normal_dist_stddev = normal_dist_stddev
-        self.nomral_dist_scale = normal_dist_scale
-        self.use_sickness_history = use_sickness_history
+
+        self.beta_rainfall = beta_rainfall
+        self.beta_temp = beta_temp
+        self.beta_lag_sickness = beta_lag_sickness
+        self.noise_std = noise_std
         self.simulated_data = None
+
+        # self.normal_dist_mean = normal_dist_mean
+        # self.normal_dist_stddev = normal_dist_stddev
+        # self.nomral_dist_scale = normal_dist_scale
 
     def simulate(self):
         from ..simulate import generate_data
