@@ -7,6 +7,5 @@ dist/
 runs/
 scripts/runs/
 /scripts/testing.py
-/models/minimalist_multiregion/
 discord.deb
 datasets/
