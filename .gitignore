@@ -6,3 +6,5 @@ __pycache__/
 dist/
 runs/
 scripts/runs/
+/scripts/testing.py
+/models/minimalist_multiregion/
