@@ -11,6 +11,7 @@ from ..default_variables import (
     DEFAULT_REGIONS,
     DEFAULT_TEMPERATURES,
 )
+import csv
 
 
 class Simulation:
@@ -62,6 +63,7 @@ class Simulation:
         normal_dist_mean=0.5,
         normal_dist_stddev=0.3,
         normal_dist_scale=10,
+        use_sickness_history=True,
     ):
         self.time_granularity = time_granularity
         self.simulation_length = simulation_length
@@ -72,6 +74,7 @@ class Simulation:
         self.normal_dist_mean = normal_dist_mean
         self.normal_dist_stddev = normal_dist_stddev
         self.nomral_dist_scale = normal_dist_scale
+        self.use_sickness_history = use_sickness_history
         self.simulated_data = None
 
     def simulate(self):
@@ -87,3 +90,26 @@ class Simulation:
 
     def show_graph(self, show_rain=False, show_temperature=False, show_sickness=True):
         graph(self, show_rain, show_temperature, show_sickness)
+
+    def simulated_data_to_csv(self, filepath):
+        header = [
+            "time_period",
+            "rainfall",
+            "mean_temperature",
+            "disease_cases",
+            "location",
+        ]
+        rows = []
+        for region in self.regions:
+            for obs in self.simulated_data[region]:
+                row = []
+                row.append(obs.time_period)
+                row.append(obs.rainfall)
+                row.append(obs.mean_temperature)
+                row.append(obs.disease_cases)
+                row.append(region)
+                rows.append(row)
+        with open(filepath, mode="w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(header)
+            writer.writerows(rows)

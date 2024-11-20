@@ -92,7 +92,7 @@ def train_test_split_csv(file, directory_to_store, test_size=0.2):
     print(f"Data split completed by location. Files saved in {directory_to_store}")
 
 
-def plot_data_with_sample_0(data_file, sample_0_file):
+def plot_data_with_sample_0(data_file, sample_0_file, filename):
     """
     Plots data from the main CSV file and adds the 'sample_0' column from another CSV file.
     Args:
@@ -141,4 +141,4 @@ def plot_data_with_sample_0(data_file, sample_0_file):
     plt.tight_layout()
 
     # Show the plot
-    plt.show()
+    plt.savefig(filename)
