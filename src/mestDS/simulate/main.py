@@ -171,9 +171,9 @@ def is_rain_season(week, rain_seasons, time_granularity, i):
 def get_temperature_new(week_number, time_granularity, i):
     if time_granularity == "D":
         day = i % 365
-        seasonal_temp = 20 + 10 * np.sin(2 * np.pi * day / 365)
+        seasonal_temp = 24 + 5 * np.sin(2 * np.pi * day / 365)
     else:
-        seasonal_temp = 20 + 10 * np.sin(2 * np.pi * week_number / 52)
+        seasonal_temp = 24 + 5 * np.sin(2 * np.pi * week_number / 52)
 
     random_noise = np.random.normal(0, 2)
     return seasonal_temp + random_noise
@@ -194,17 +194,15 @@ def get_disease_cases_new(
     beta_rainfall,
     beta_temp,
     beta_lag_sickness,
-    noise_std=1,
+    noise_std,
 ):
     noise = np.random.laplace(0, noise_std)
 
     sickness = (
-        #        intercept
-        beta_rainfall * rainfall
+        intercept
+        + beta_rainfall * rainfall
         + beta_temp * temperature
         + beta_lag_sickness * prev_sickness
         + noise
     )
-
-    # print(round(sickness))
     return round(sickness)
