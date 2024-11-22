@@ -30,15 +30,11 @@ def generate_data(simulation: Simulation):
         delta = TIMEDELTA[simulation.time_granularity]
 
         for i in range(1, simulation.simulation_length):
-            week_number = get_weeknumber(i)
-            rain_season = is_rain_season(
-                week_number, simulation.rain_season, simulation.time_granularity, i
-            )
+            week_number = get_weeknumber(i, simulation.time_granularity)
+            rain_season = is_rain_season(week_number, simulation.rain_season)
 
             precipitation = get_precipitation(rain_season)
-            temperature = get_temperature_new(
-                week_number, simulation.time_granularity, i
-            )
+            temperature = get_temperature_new(week_number)
 
             # input = np.array([precipitation, temperature])
             # weight = np.array([0.7, 0.3])
@@ -106,10 +102,11 @@ def get_sickness(sickness, input, weight, sp, sa, si):
     return sickness
 
 
-def get_weeknumber(week):
-    week = week / 52
-    week = 52 if ((week % 1) * 52 == 0) else (week % 1) * 52
-    return round(week)
+def get_weeknumber(i, time_granularity):
+    if time_granularity == "D":
+        return ((i - 1) // 7 + 1) % 52
+    else:
+        return i % 52
 
 
 def get_monthnumber(week):
@@ -160,20 +157,15 @@ def get_divider(i, data, region):
         return whole_number
 
 
-def is_rain_season(week, rain_seasons, time_granularity, i):
-    time = i % 365 if time_granularity == "D" else week
+def is_rain_season(week, rain_seasons):
     for season in rain_seasons:
-        if season.start <= time <= season.end:
+        if season.start <= week <= season.end:
             return True
     return False
 
 
-def get_temperature_new(week_number, time_granularity, i):
-    if time_granularity == "D":
-        day = i % 365
-        seasonal_temp = 24 + 5 * np.sin(2 * np.pi * day / 365)
-    else:
-        seasonal_temp = 24 + 5 * np.sin(2 * np.pi * week_number / 52)
+def get_temperature_new(week_number):
+    seasonal_temp = 24 + 5 * np.sin(2 * np.pi * week_number / 52)
 
     random_noise = np.random.normal(0, 2)
     return seasonal_temp + random_noise
