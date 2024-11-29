@@ -35,7 +35,14 @@ def generate_data(simulation: Simulation):
 
             precipitation = get_precipitation(rain_season)
             temperature = get_temperature_new(week_number)
-
+            total_neighbour_influence = get_influence_from_neighbours(
+                region_index=simulation.regions.index(region),
+                t=i,
+                regions=simulation.regions,
+                neighbors=simulation.neighbors,
+                simulated_data=data_observation,
+                beta_neighbour_influence=simulation.beta_neighbour_influence,
+            )
             # input = np.array([precipitation, temperature])
             # weight = np.array([0.7, 0.3])
             sickness = get_disease_cases_new(
@@ -46,6 +53,7 @@ def generate_data(simulation: Simulation):
                 beta_rainfall=simulation.beta_rainfall,
                 beta_temp=simulation.beta_temp,
                 beta_lag_sickness=simulation.beta_lag_sickness,
+                beta_neighbour_influence=total_neighbour_influence,
                 noise_std=simulation.noise_std,
                 # data_observation[region][i - 1].disease_cases,
                 # input,
@@ -178,6 +186,26 @@ def get_rainfall_new(rain_season):
         return np.random.gamma(shape=2, scale=0.5) * 0.5
 
 
+def get_influence_from_neighbours(
+    region_index, t, regions, neighbors, simulated_data, beta_neighbour_influence
+):
+    if t == 0:
+        return 0
+
+    neighbours = np.where(neighbors[region_index] == 1)[0]
+    total_influence = 0
+
+    for neighbour_index in neighbours:
+        neighbour_region = regions[neighbour_index]
+
+        if t - 1 < len(simulated_data[neighbour_region]):
+            neighbour_sickness = simulated_data[neighbour_region][t - 1].disease_cases
+
+            total_influence += neighbour_sickness * beta_neighbour_influence
+
+    return total_influence
+
+
 def get_disease_cases_new(
     prev_sickness,
     rainfall,
@@ -186,6 +214,7 @@ def get_disease_cases_new(
     beta_rainfall,
     beta_temp,
     beta_lag_sickness,
+    beta_neighbour_influence,
     noise_std,
 ):
     noise = np.random.laplace(0, noise_std)
@@ -195,6 +224,7 @@ def get_disease_cases_new(
         + beta_rainfall * rainfall
         + beta_temp * temperature
         + beta_lag_sickness * prev_sickness
+        + beta_neighbour_influence
         + noise
     )
     return round(sickness)

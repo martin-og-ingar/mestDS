@@ -2,6 +2,7 @@ from typing import Dict, Literal
 import datetime
 
 from mestDS.visualize.main import graph
+import numpy as np
 from .ClimateHealthData import Obs
 from .RainSeason import RainSeason
 from chap_core.assessment.prediction_evaluator import evaluate_model
@@ -51,6 +52,8 @@ class Simulation:
     beta_rainfall: float
     beta_temp: float
     beta_lag_sickness: float
+    beta_neighbour_influence: float
+    neighbors: np.ndarray
     noise_std: float
 
     # normal_dist_mean: float
@@ -71,6 +74,8 @@ class Simulation:
         beta_rainfall=0.5,
         beta_temp=0.5,
         beta_lag_sickness=0.5,
+        beta_neighbour_influence=0.5,
+        neighbors=None,
         noise_std=1,
     ):
         self.time_granularity = time_granularity
@@ -83,6 +88,11 @@ class Simulation:
         self.beta_rainfall = beta_rainfall
         self.beta_temp = beta_temp
         self.beta_lag_sickness = beta_lag_sickness
+        self.beta_neighbour_influence = beta_neighbour_influence
+
+        self.neighbors = (
+            neighbors if neighbors is not None else np.array([[0, 0], [0, 0]])
+        )
         self.noise_std = noise_std
         self.simulated_data = None
 
