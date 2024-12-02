@@ -29,7 +29,8 @@ def generate_data(simulation: Simulation):
 
         delta = TIMEDELTA[simulation.time_granularity]
 
-        for i in range(1, simulation.simulation_length):
+    for i in range(1, simulation.simulation_length):
+        for region in simulation.regions:
             week_number = get_weeknumber(i, simulation.time_granularity)
             rain_season = is_rain_season(week_number, simulation.rain_season)
 
@@ -41,26 +42,18 @@ def generate_data(simulation: Simulation):
                 regions=simulation.regions,
                 neighbors=simulation.neighbors,
                 simulated_data=data_observation,
-                beta_neighbour_influence=simulation.beta_neighbour_influence,
             )
-            # input = np.array([precipitation, temperature])
-            # weight = np.array([0.7, 0.3])
             sickness = get_disease_cases_new(
                 prev_sickness=data_observation[region][i - 1].disease_cases,
                 rainfall=precipitation,
                 temperature=temperature,
-                intercept=5,
+                intercept=0,
                 beta_rainfall=simulation.beta_rainfall,
                 beta_temp=simulation.beta_temp,
                 beta_lag_sickness=simulation.beta_lag_sickness,
-                beta_neighbour_influence=total_neighbour_influence,
+                beta_neighbour_influence=simulation.beta_neighbour_influence,
+                neighbour_sickness=total_neighbour_influence,
                 noise_std=simulation.noise_std,
-                # data_observation[region][i - 1].disease_cases,
-                # input,
-                # weight,
-                # simulation.normal_dist_mean,
-                # simulation.normal_dist_stddev,
-                # simulation.nomral_dist_scale,
             )
             current_date = simulation.simulation_start_date + (i * delta)
             current_date = datetime.strftime(current_date, DATEFORMAT)
@@ -186,9 +179,7 @@ def get_rainfall_new(rain_season):
         return np.random.gamma(shape=2, scale=0.5) * 0.5
 
 
-def get_influence_from_neighbours(
-    region_index, t, regions, neighbors, simulated_data, beta_neighbour_influence
-):
+def get_influence_from_neighbours(region_index, t, regions, neighbors, simulated_data):
     if t == 0:
         return 0
 
@@ -201,9 +192,9 @@ def get_influence_from_neighbours(
         if t - 1 < len(simulated_data[neighbour_region]):
             neighbour_sickness = simulated_data[neighbour_region][t - 1].disease_cases
 
-            total_influence += neighbour_sickness * beta_neighbour_influence
+            total_influence += neighbour_sickness
 
-    return total_influence
+    return total_influence / len(neighbours)
 
 
 def get_disease_cases_new(
@@ -215,6 +206,7 @@ def get_disease_cases_new(
     beta_temp,
     beta_lag_sickness,
     beta_neighbour_influence,
+    neighbour_sickness,
     noise_std,
 ):
     noise = np.random.laplace(0, noise_std)
@@ -224,7 +216,7 @@ def get_disease_cases_new(
         + beta_rainfall * rainfall
         + beta_temp * temperature
         + beta_lag_sickness * prev_sickness
-        + beta_neighbour_influence
+        + beta_neighbour_influence * neighbour_sickness
         + noise
     )
     return round(sickness)

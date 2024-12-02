@@ -23,8 +23,8 @@ sim = Simulation(
     regions=["A", "B", "C"],
     beta_rainfall=0.9,
     beta_temp=0.2,
-    beta_lag_sickness=0.2,
-    beta_neighbour_influence=0.3,
+    beta_lag_sickness=0.3,
+    beta_neighbour_influence=0.9,
     neighbors=neighbors,
 )
 sim.simulate()
