@@ -21,9 +21,9 @@ sim = Simulation(
     time_granularity="D",
     rain_season=[RainSeason(start=12, end=20), RainSeason(start=36, end=40)],
     regions=["A", "B", "C"],
-    beta_rainfall=0.9,
-    beta_temp=0.2,
-    beta_lag_sickness=0.3,
+    beta_rainfall=-1,
+    beta_temp=0.9,
+    beta_lag_sickness=0.9,
     beta_neighbour_influence=0.9,
     neighbors=neighbors,
 )

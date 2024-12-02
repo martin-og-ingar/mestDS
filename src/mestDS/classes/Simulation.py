@@ -83,10 +83,10 @@ class Simulation:
         self.temperatures = temperatures
         self.regions = regions
         beta_values = [
-            beta_rainfall,
-            beta_temp,
-            beta_lag_sickness,
-            beta_neighbour_influence,
+            beta_rainfall + 0.5,
+            beta_temp + 0.5,
+            beta_lag_sickness + 0.5,
+            beta_neighbour_influence + 0.5,
         ]
         beta_values = softmax(beta_values)
         self.beta_rainfall = beta_values[0]
