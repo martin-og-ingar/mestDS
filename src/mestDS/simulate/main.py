@@ -11,9 +11,21 @@ from ..classes.Simulation import Simulation, RainSeason
 def generate_data(simulation: Simulation):
     data_observation = {region: [] for region in simulation.regions}
     for region in simulation.regions:
+
         precipitation = random.randint(0, 100)
-        sickness = random.randint(10, 15)
         temperature = random.randint(20, 30)
+        sickness = get_disease_cases_new(
+            prev_sickness=50,
+            rainfall=precipitation,
+            temperature=temperature,
+            intercept=200,
+            beta_rainfall=simulation.beta_rainfall,
+            beta_temp=simulation.beta_temp,
+            beta_lag_sickness=simulation.beta_lag_sickness,
+            beta_neighbour_influence=simulation.beta_neighbour_influence,
+            neighbour_sickness=0,
+            noise_std=simulation.noise_std,
+        )
         start_date_formatted = datetime.strftime(
             simulation.simulation_start_date, DATEFORMAT
         )
@@ -47,7 +59,7 @@ def generate_data(simulation: Simulation):
                 prev_sickness=data_observation[region][i - 1].disease_cases,
                 rainfall=precipitation,
                 temperature=temperature,
-                intercept=0,
+                intercept=200,
                 beta_rainfall=simulation.beta_rainfall,
                 beta_temp=simulation.beta_temp,
                 beta_lag_sickness=simulation.beta_lag_sickness,

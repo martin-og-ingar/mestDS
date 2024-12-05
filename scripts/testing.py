@@ -10,25 +10,14 @@ sys.path.append(root_dir)
 
 from mestDS import Simulation, plot_data_with_sample_0
 from chap_core.predictor.model_registry import registry
-from mestDS.classes import RainSeason
+from mestDS.classes import MultipleSimulations, RainSeason
 from mestDS.utils.main import train_test_split_csv
 from models.minimalist_multiregion.train import train
 from models.minimalist_multiregion.predict import predict
 
-neighbors = np.array([[0, 1, 0], [1, 0, 1], [0, 0, 1]])
-sim = Simulation(
-    simulation_length=365,
-    time_granularity="D",
-    rain_season=[RainSeason(start=12, end=20), RainSeason(start=36, end=40)],
-    regions=["A", "B", "C"],
-    beta_rainfall=-1,
-    beta_temp=0.9,
-    beta_lag_sickness=0.9,
-    beta_neighbour_influence=0.9,
-    neighbors=neighbors,
-)
-sim.simulate()
-sim.show_graph()
+m_sim = MultipleSimulations(yaml_path="scripts/simulation2.yaml")
+m_sim.simulations[0].show_graph()
+
 
 # sim.chap_evaluation_on_model(registry.get_model("chap_ewars_monthly"))
 # filename = "with_sickness_lag"

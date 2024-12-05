@@ -72,8 +72,8 @@ class Simulation:
         beta_rainfall=0.5,
         beta_temp=0.5,
         beta_lag_sickness=0.5,
-        beta_neighbour_influence=0.5,
-        neighbors=None,
+        beta_neighbour_influence=-1,
+        neighbors=np.array([[0, 1], [1, 0]]),
         noise_std=1,
     ):
         self.time_granularity = time_granularity
@@ -83,10 +83,10 @@ class Simulation:
         self.temperatures = temperatures
         self.regions = regions
         beta_values = [
-            beta_rainfall + 0.5,
-            beta_temp + 0.5,
-            beta_lag_sickness + 0.5,
-            beta_neighbour_influence + 0.5,
+            beta_rainfall,
+            beta_temp,
+            beta_lag_sickness,
+            beta_neighbour_influence,
         ]
         beta_values = softmax(beta_values)
         self.beta_rainfall = beta_values[0]
@@ -94,9 +94,7 @@ class Simulation:
         self.beta_lag_sickness = beta_values[2]
         self.beta_neighbour_influence = beta_values[3]
 
-        self.neighbors = (
-            neighbors if neighbors is not None else np.array([[0, 0], [0, 0]])
-        )
+        self.neighbors = neighbors
         self.noise_std = noise_std
         self.simulated_data = None
 
