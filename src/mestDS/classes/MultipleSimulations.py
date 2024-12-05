@@ -27,9 +27,8 @@ def parse_yaml(yaml_path):
             for key, value in sim.items():
                 simulation.__setattr__(key, value)
                 print(f"{key}: {value}")
-                simulations.append(simulation)
             simulation.simulate()
-            simulation.simulated_data_to_csv(f"simulation_{i}.csv")
+            simulations.append(simulation)
 
     return simulations
 

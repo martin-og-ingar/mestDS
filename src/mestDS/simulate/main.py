@@ -11,9 +11,21 @@ from ..classes.Simulation import Simulation, RainSeason
 def generate_data(simulation: Simulation):
     data_observation = {region: [] for region in simulation.regions}
     for region in simulation.regions:
+
         precipitation = random.randint(0, 100)
-        sickness = random.randint(10, 15)
         temperature = random.randint(20, 30)
+        sickness = get_disease_cases_new(
+            prev_sickness=50,
+            rainfall=precipitation,
+            temperature=temperature,
+            intercept=200,
+            beta_rainfall=simulation.beta_rainfall,
+            beta_temp=simulation.beta_temp,
+            beta_lag_sickness=simulation.beta_lag_sickness,
+            beta_neighbour_influence=simulation.beta_neighbour_influence,
+            neighbour_sickness=0,
+            noise_std=simulation.noise_std,
+        )
         start_date_formatted = datetime.strftime(
             simulation.simulation_start_date, DATEFORMAT
         )
@@ -29,30 +41,31 @@ def generate_data(simulation: Simulation):
 
         delta = TIMEDELTA[simulation.time_granularity]
 
-        for i in range(1, simulation.simulation_length):
+    for i in range(1, simulation.simulation_length):
+        for region in simulation.regions:
             week_number = get_weeknumber(i, simulation.time_granularity)
             rain_season = is_rain_season(week_number, simulation.rain_season)
 
             precipitation = get_precipitation(rain_season)
             temperature = get_temperature_new(week_number)
-
-            # input = np.array([precipitation, temperature])
-            # weight = np.array([0.7, 0.3])
+            total_neighbour_influence = get_influence_from_neighbours(
+                region_index=simulation.regions.index(region),
+                t=i,
+                regions=simulation.regions,
+                neighbors=simulation.neighbors,
+                simulated_data=data_observation,
+            )
             sickness = get_disease_cases_new(
                 prev_sickness=data_observation[region][i - 1].disease_cases,
                 rainfall=precipitation,
                 temperature=temperature,
-                intercept=5,
+                intercept=200,
                 beta_rainfall=simulation.beta_rainfall,
                 beta_temp=simulation.beta_temp,
                 beta_lag_sickness=simulation.beta_lag_sickness,
+                beta_neighbour_influence=simulation.beta_neighbour_influence,
+                neighbour_sickness=total_neighbour_influence,
                 noise_std=simulation.noise_std,
-                # data_observation[region][i - 1].disease_cases,
-                # input,
-                # weight,
-                # simulation.normal_dist_mean,
-                # simulation.normal_dist_stddev,
-                # simulation.nomral_dist_scale,
             )
             current_date = simulation.simulation_start_date + (i * delta)
             current_date = datetime.strftime(current_date, DATEFORMAT)
@@ -178,6 +191,24 @@ def get_rainfall_new(rain_season):
         return np.random.gamma(shape=2, scale=0.5) * 0.5
 
 
+def get_influence_from_neighbours(region_index, t, regions, neighbors, simulated_data):
+    if t == 0:
+        return 0
+
+    neighbours = np.where(neighbors[region_index] == 1)[0]
+    total_influence = 0
+
+    for neighbour_index in neighbours:
+        neighbour_region = regions[neighbour_index]
+
+        if t - 1 < len(simulated_data[neighbour_region]):
+            neighbour_sickness = simulated_data[neighbour_region][t - 1].disease_cases
+
+            total_influence += neighbour_sickness
+
+    return total_influence / len(neighbours)
+
+
 def get_disease_cases_new(
     prev_sickness,
     rainfall,
@@ -186,6 +217,8 @@ def get_disease_cases_new(
     beta_rainfall,
     beta_temp,
     beta_lag_sickness,
+    beta_neighbour_influence,
+    neighbour_sickness,
     noise_std,
 ):
     noise = np.random.laplace(0, noise_std)
@@ -195,6 +228,7 @@ def get_disease_cases_new(
         + beta_rainfall * rainfall
         + beta_temp * temperature
         + beta_lag_sickness * prev_sickness
+        + beta_neighbour_influence * neighbour_sickness
         + noise
     )
     return round(sickness)
