@@ -4,8 +4,4 @@ simulation:
     simulation_length: 500
   sims:
     - beta_rain: 0.5
-      beta_lag_sickness: 0.9
-    - beta_rain: 0.5
-      beta_lag_sickness: 0.9
-    - beta_rain: 0.5
-      beta_lag_sickness: 0.9
+      beta_lag_sickness: 0.5

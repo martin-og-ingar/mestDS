@@ -3,9 +3,8 @@ import random
 from ..classes.ClimateHealthData import Obs
 from ..default_variables import DATEFORMAT, TIMEDELTA, DEFAULT_TEMPERATURES
 import numpy as np
-from chap_core.data import DataSet, PeriodObservation
 from datetime import datetime
-from ..classes.Simulation import Simulation, RainSeason
+from ..classes.Simulation import Simulation
 
 
 def generate_data(simulation: Simulation):
@@ -14,7 +13,7 @@ def generate_data(simulation: Simulation):
 
         precipitation = random.randint(0, 100)
         temperature = random.randint(20, 30)
-        sickness = get_disease_cases_new(
+        sickness = get_disease_cases(
             prev_sickness=50,
             rainfall=precipitation,
             temperature=temperature,
@@ -47,7 +46,7 @@ def generate_data(simulation: Simulation):
             rain_season = is_rain_season(week_number, simulation.rain_season)
 
             precipitation = get_precipitation(rain_season)
-            temperature = get_temperature_new(week_number)
+            temperature = get_temperature(week_number)
             total_neighbour_influence = get_influence_from_neighbours(
                 region_index=simulation.regions.index(region),
                 t=i,
@@ -55,7 +54,7 @@ def generate_data(simulation: Simulation):
                 neighbors=simulation.neighbors,
                 simulated_data=data_observation,
             )
-            sickness = get_disease_cases_new(
+            sickness = get_disease_cases(
                 prev_sickness=data_observation[region][i - 1].disease_cases,
                 rainfall=precipitation,
                 temperature=temperature,
@@ -94,27 +93,6 @@ def get_precipitation(rain_season):
     return rain
 
 
-# Generate temperature data
-def get_temp(week):
-    month = get_monthnumber(week)
-    temperature = DEFAULT_TEMPERATURES[month]
-    temperature += random.randint(-3, 3)
-    return temperature
-
-
-# Generate sickness data
-#
-def get_sickness(sickness, input, weight, sp, sa, si):
-    sum = np.dot(input, weight)
-    max_dot = 77.28
-    # random_noise = np.clip(np.random.normal((sum / max_dot) - sp, sa), -3, 3)
-    # sickness = sickness + int(random_noise * si)
-    sickness = sickness + int(np.random.normal((sum / max_dot) - sp, sa) * si)
-    sickness = max(min(sickness, 1000), 1)
-
-    return sickness
-
-
 def get_weeknumber(i, time_granularity):
     if time_granularity == "D":
         return ((i - 1) // 7 + 1) % 52
@@ -122,15 +100,79 @@ def get_weeknumber(i, time_granularity):
         return i % 52
 
 
-def get_monthnumber(week):
-    if week == 52:
-        return 11
-    month = week / 4.33
-    return math.floor(month)
+def is_rain_season(week, rain_seasons):
+    for season in rain_seasons:
+        if season.start <= week <= season.end:
+            return True
+    return False
+
+
+def get_temperature(week_number):
+    seasonal_temp = 24 + 5 * np.sin(2 * np.pi * week_number / 52)
+
+    random_noise = np.random.normal(0, 2)
+    return seasonal_temp + random_noise
+
+
+def get_rainfall(rain_season):
+    if rain_season:
+        return np.random.gamma(shape=6, scale=1.0) * 2
+    else:
+        return np.random.gamma(shape=2, scale=0.5) * 0.5
+
+
+def get_influence_from_neighbours(region_index, t, regions, neighbors, simulated_data):
+    if t == 0:
+        return 0
+
+    neighbours = np.where(neighbors[region_index] == 1)[0]
+    total_influence = 0
+
+    for neighbour_index in neighbours:
+        neighbour_region = regions[neighbour_index]
+
+        if t - 1 < len(simulated_data[neighbour_region]):
+            neighbour_sickness = simulated_data[neighbour_region][t - 1].disease_cases
+
+            total_influence += neighbour_sickness
+
+    return total_influence / len(neighbours)
+
+
+def get_disease_cases(
+    prev_sickness,
+    rainfall,
+    temperature,
+    intercept,
+    beta_rainfall,
+    beta_temp,
+    beta_lag_sickness,
+    beta_neighbour_influence,
+    neighbour_sickness,
+    noise_std,
+):
+    noise = np.random.laplace(0, noise_std)
+
+    sickness = (
+        # intercept
+        +beta_rainfall * rainfall
+        + beta_temp * temperature
+        + beta_lag_sickness * prev_sickness
+        + beta_neighbour_influence * neighbour_sickness
+        + noise
+    )
+    return round(sickness)
+
+
+def get_temp_legacy(week):
+    month = get_monthnumber(week)
+    temperature = DEFAULT_TEMPERATURES[month]
+    temperature += random.randint(-3, 3)
+    return temperature
 
 
 # calculate average
-def calculate_weekly_averages(data, region):
+def calculate_weekly_averages_legacy(data, region):
     average_data = {region: []}
     for i in range(52):
         obs = Obs(time_period=str(i), disease_cases=0, rainfall=0, temperature=0)
@@ -170,65 +212,19 @@ def get_divider(i, data, region):
         return whole_number
 
 
-def is_rain_season(week, rain_seasons):
-    for season in rain_seasons:
-        if season.start <= week <= season.end:
-            return True
-    return False
+def get_monthnumber(week):
+    if week == 52:
+        return 11
+    month = week / 4.33
+    return math.floor(month)
 
 
-def get_temperature_new(week_number):
-    seasonal_temp = 24 + 5 * np.sin(2 * np.pi * week_number / 52)
+def get_sickness_legacy(sickness, input, weight, sp, sa, si):
+    sum = np.dot(input, weight)
+    max_dot = 77.28
+    # random_noise = np.clip(np.random.normal((sum / max_dot) - sp, sa), -3, 3)
+    # sickness = sickness + int(random_noise * si)
+    sickness = sickness + int(np.random.normal((sum / max_dot) - sp, sa) * si)
+    sickness = max(min(sickness, 1000), 1)
 
-    random_noise = np.random.normal(0, 2)
-    return seasonal_temp + random_noise
-
-
-def get_rainfall_new(rain_season):
-    if rain_season:
-        return np.random.gamma(shape=2, scale=1.0) * 2
-    else:
-        return np.random.gamma(shape=2, scale=0.5) * 0.5
-
-
-def get_influence_from_neighbours(region_index, t, regions, neighbors, simulated_data):
-    if t == 0:
-        return 0
-
-    neighbours = np.where(neighbors[region_index] == 1)[0]
-    total_influence = 0
-
-    for neighbour_index in neighbours:
-        neighbour_region = regions[neighbour_index]
-
-        if t - 1 < len(simulated_data[neighbour_region]):
-            neighbour_sickness = simulated_data[neighbour_region][t - 1].disease_cases
-
-            total_influence += neighbour_sickness
-
-    return total_influence / len(neighbours)
-
-
-def get_disease_cases_new(
-    prev_sickness,
-    rainfall,
-    temperature,
-    intercept,
-    beta_rainfall,
-    beta_temp,
-    beta_lag_sickness,
-    beta_neighbour_influence,
-    neighbour_sickness,
-    noise_std,
-):
-    noise = np.random.laplace(0, noise_std)
-
-    sickness = (
-        intercept
-        + beta_rainfall * rainfall
-        + beta_temp * temperature
-        + beta_lag_sickness * prev_sickness
-        + beta_neighbour_influence * neighbour_sickness
-        + noise
-    )
-    return round(sickness)
+    return sickness
