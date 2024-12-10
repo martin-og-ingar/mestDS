@@ -10,6 +10,18 @@ class MultipleSimulations:
     def __init__(self, yaml_path):
         self.simulations = parse_yaml(yaml_path)
 
+    def simulate(self):
+        for simulation in self.simulations:
+            simulation.simulate()
+
+    def graph(self, folder_name):
+        for i, simulation in enumerate(self.simulations):
+            if folder_name:
+                file_name = f"{folder_name}/{i}.png"
+                simulation.graph(file_name=file_name)
+            else:
+                simulation.graph
+
 
 def parse_yaml(yaml_path):
     parameters = load_yaml(yaml_path)
@@ -27,7 +39,6 @@ def parse_yaml(yaml_path):
             for key, value in sim.items():
                 simulation.__setattr__(key, value)
                 print(f"{key}: {value}")
-            simulation.simulate()
             simulations.append(simulation)
 
     return simulations

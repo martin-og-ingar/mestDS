@@ -110,7 +110,13 @@ class Simulation:
             model, data, report_filename="test.pdf", prediction_length=prediction_lenght
         )
 
-    def graph(self, show_rain=False, show_temperature=False, show_sickness=True):
+    def graph(
+        self,
+        show_rain=False,
+        show_temperature=False,
+        show_sickness=True,
+        file_name=None,
+    ):
         from mestDS.default_variables import DATEFORMAT, TIMEDELTA
 
         num_plots = sum([show_rain, show_temperature, show_sickness])
@@ -158,7 +164,11 @@ class Simulation:
             ax.grid(True)
 
         plt.tight_layout()
-        plt.show()
+        if file_name:
+            plt.savefig(file_name)
+        else:
+            plt.show()
+        plt.close()
 
     def simulated_data_to_csv(self, filepath):
         header = [
