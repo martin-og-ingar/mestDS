@@ -8,8 +8,9 @@ root_dir = os.path.abspath(
 sys.path.append(root_dir)
 
 from mestDS import Simulation
-from mestDS.classes import MultipleSimulations, RainSeason
+from mestDS.classes import MultipleSimulations, RainSeason, Region
 
 
 m_sim = MultipleSimulations(yaml_path="scripts/simulation2.yaml")
-m_sim.simulations[0].graph()
+m_sim.simulate()
+m_sim.graph()

@@ -1,4 +1,5 @@
 from .classes.RainSeason import RainSeason
+from .classes.Region import Region
 import datetime
 
 DEFAULT_TEMPERATURES = [
@@ -21,5 +22,8 @@ TIMEDELTA = {
     "M": datetime.timedelta(weeks=4),
 }
 DATEFORMAT = "%Y-%m-%d"
-DEFAULT_REGIONS = ["Masindi", "Apac"]
 DEFAULT_RAIN_SEASON = [RainSeason(start=12, end=23), RainSeason(start=36, end=40)]
+DEFAULT_REGIONS = [
+    Region("Masadi", 1, DEFAULT_RAIN_SEASON, [2]),
+    Region("Kasama", 2, DEFAULT_RAIN_SEASON, [1]),
+]

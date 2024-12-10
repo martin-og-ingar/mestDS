@@ -1,6 +1,8 @@
 from typing import List
 
 import yaml
+
+from mestDS.classes import RainSeason, Region
 from . import Simulation
 
 
@@ -14,19 +16,35 @@ class MultipleSimulations:
         for simulation in self.simulations:
             simulation.simulate()
 
-    def graph(self, folder_name):
+    def graph(self, folder_name=None):
         for i, simulation in enumerate(self.simulations):
             if folder_name:
                 file_name = f"{folder_name}/{i}.png"
                 simulation.graph(file_name=file_name)
             else:
-                simulation.graph
+                simulation.graph()
 
 
 def parse_yaml(yaml_path):
     parameters = load_yaml(yaml_path)
     simulations = []
     sim_base = Simulation()
+    regions = parameters.get("simulation", {}).get("regions", {})
+    region_list = []
+    for reg in regions:
+        region = Region()
+        for key, value in reg.items():
+            if key == "rain_season":
+                rain_season = []
+                for season in value:
+                    rain_season.append(RainSeason(season[0], season[1]))
+                region.__setattr__(key, rain_season)
+            else:
+
+                region.__setattr__(key, value)
+        region_list.append(region)
+    sim_base.regions = region_list
+
     base = parameters.get("simulation", {}).get("base", {})
     for key, value in base.items():
         sim_base.__setattr__(key, value)

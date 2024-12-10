@@ -8,7 +8,7 @@ from ..classes.Simulation import Simulation
 
 
 def generate_data(simulation: Simulation):
-    data_observation = {region: [] for region in simulation.regions}
+    data_observation = {region.name: [] for region in simulation.regions}
     for region in simulation.regions:
 
         precipitation = random.randint(0, 100)
@@ -36,26 +36,25 @@ def generate_data(simulation: Simulation):
             population=10000,
         )
 
-        data_observation[region].append(obs)
+        data_observation[region.name].append(obs)
 
         delta = TIMEDELTA[simulation.time_granularity]
 
     for i in range(1, simulation.simulation_length):
         for region in simulation.regions:
             week_number = get_weeknumber(i, simulation.time_granularity)
-            rain_season = is_rain_season(week_number, simulation.rain_season)
+            rain_season = is_rain_season(week_number, region.rain_season)
 
             precipitation = get_precipitation(rain_season)
             temperature = get_temperature(week_number)
             total_neighbour_influence = get_influence_from_neighbours(
-                region_index=simulation.regions.index(region),
                 t=i,
+                region=region,
                 regions=simulation.regions,
-                neighbors=simulation.neighbors,
                 simulated_data=data_observation,
             )
             sickness = get_disease_cases(
-                prev_sickness=data_observation[region][i - 1].disease_cases,
+                prev_sickness=data_observation[region.name][i - 1].disease_cases,
                 rainfall=precipitation,
                 temperature=temperature,
                 intercept=200,
@@ -75,7 +74,7 @@ def generate_data(simulation: Simulation):
                 mean_temperature=temperature,
                 population=10000,
             )
-            data_observation[region].append(obs)
+            data_observation[region.name].append(obs)
     return data_observation
 
 
@@ -121,22 +120,23 @@ def get_rainfall(rain_season):
         return np.random.gamma(shape=2, scale=0.5) * 0.5
 
 
-def get_influence_from_neighbours(region_index, t, regions, neighbors, simulated_data):
+def get_influence_from_neighbours(t, region, regions, simulated_data):
     if t == 0:
         return 0
-
-    neighbours = np.where(neighbors[region_index] == 1)[0]
     total_influence = 0
 
-    for neighbour_index in neighbours:
-        neighbour_region = regions[neighbour_index]
-
-        if t - 1 < len(simulated_data[neighbour_region]):
-            neighbour_sickness = simulated_data[neighbour_region][t - 1].disease_cases
+    for neighbour_id in region.neighbour:
+        neighbour_region = next(
+            (r for r in regions if r.region_id == neighbour_id), None
+        )
+        if t - 1 < len(simulated_data[neighbour_region.name]):
+            neighbour_sickness = simulated_data[neighbour_region.name][
+                t - 1
+            ].disease_cases
 
             total_influence += neighbour_sickness
 
-    return total_influence / len(neighbours)
+    return total_influence / len(region.neighbour)
 
 
 def get_disease_cases(
