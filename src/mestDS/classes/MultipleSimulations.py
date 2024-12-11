@@ -14,15 +14,17 @@ class MultipleSimulations:
 
     def simulate(self):
         for simulation in self.simulations:
+            # print(simulation.__dict__)
             simulation.simulate()
 
     def graph(self, folder_name=None):
         for i, simulation in enumerate(self.simulations):
+            title = f"Simulation (r:{simulation.beta_rainfall}, ls: {simulation.beta_lag_sickness}, t: {simulation.beta_temp}, n: {simulation.beta_neighbour_influence})"
             if folder_name:
                 file_name = f"{folder_name}/{i}.png"
-                simulation.graph(file_name=file_name)
+                simulation.graph(file_name=file_name, title=title)
             else:
-                simulation.graph()
+                simulation.graph(title=title)
 
 
 def parse_yaml(yaml_path):
@@ -52,11 +54,11 @@ def parse_yaml(yaml_path):
     sims = parameters.get("simulation", {}).get("sims", {})
     if sims:
         for i, sim in enumerate(sims):
-            simulation = sim_base
-            print(f"Sim {i} with values: ")
+            simulation = Simulation()
+            simulation.__dict__.update(sim_base.__dict__)
             for key, value in sim.items():
                 simulation.__setattr__(key, value)
-                print(f"{key}: {value}")
+            print(simulation.__dict__)
             simulations.append(simulation)
 
     return simulations

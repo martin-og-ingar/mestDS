@@ -81,17 +81,10 @@ class Simulation:
         self.simulation_start_date = simulation_start_date
         self.temperatures = temperatures
         self.regions = regions
-        beta_values = [
-            beta_rainfall,
-            beta_temp,
-            beta_lag_sickness,
-            beta_neighbour_influence,
-        ]
-        beta_values = softmax(beta_values)
-        self.beta_rainfall = beta_values[0]
-        self.beta_temp = beta_values[1]
-        self.beta_lag_sickness = beta_values[2]
-        self.beta_neighbour_influence = beta_values[3]
+        self.beta_rainfall = beta_rainfall
+        self.beta_temp = beta_temp
+        self.beta_lag_sickness = beta_lag_sickness
+        self.beta_neighbour_influence = beta_neighbour_influence
 
         self.neighbors = neighbors
         self.noise_std = noise_std
@@ -99,6 +92,18 @@ class Simulation:
 
     def simulate(self):
         from ..simulate import generate_data
+
+        beta_values = [
+            self.beta_rainfall,
+            self.beta_temp,
+            self.beta_lag_sickness,
+            self.beta_neighbour_influence,
+        ]
+        beta_values = softmax(beta_values)
+        self.beta_rainfall = beta_values[0]
+        self.beta_temp = beta_values[1]
+        self.beta_lag_sickness = beta_values[2]
+        self.beta_neighbour_influence = beta_values[3]
 
         self.simulated_data = generate_data(self)
 
@@ -114,6 +119,7 @@ class Simulation:
         show_temperature=False,
         show_sickness=True,
         file_name=None,
+        title="",
     ):
         from mestDS.default_variables import DATEFORMAT, TIMEDELTA
 
@@ -160,13 +166,14 @@ class Simulation:
             ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(DATEFORMAT))
             ax.xaxis.set_major_locator(plt.matplotlib.dates.AutoDateLocator())
             ax.grid(True)
-        plt.show()
-        # plt.tight_layout()
-        # if file_name:
-        #     plt.savefig(file_name)
-        # else:
-        #     plt.show()
-        # plt.close()
+        plt.title(title)
+        plt.tight_layout()
+        if file_name:
+            plt.savefig(file_name)
+        else:
+            plt.show()
+
+        plt.close(fig)
 
     def simulated_data_to_csv(self, filepath):
         header = [
