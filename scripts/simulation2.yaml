@@ -3,8 +3,12 @@ simulation:
     time_granularity: "D"
     simulation_length: 500
   sims:
-    - beta_rain: 0.5
+    - beta_rainfall: 0.5
       beta_lag_sickness: 0.4
+    - beta_rainfall: 0.9
+      beta_lag_sickness: 0.5
+    - beta_rainfall: 0.5
+      beta_lag_sickness: 0.9
   regions:
     - name: "Finnmark"
       region_id: 1
