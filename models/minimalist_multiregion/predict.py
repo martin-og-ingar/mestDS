@@ -3,7 +3,7 @@ import argparse
 import joblib
 import pandas as pd
 
-from .utils import get_df_per_location
+from utils import get_df_per_location
 
 
 def predict(model_fn, historic, future_climatedata_fn, predictions_fn):

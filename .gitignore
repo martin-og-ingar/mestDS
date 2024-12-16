@@ -9,3 +9,4 @@ scripts/runs/
 /scripts/testing.py
 discord.deb
 datasets/
+*.zip

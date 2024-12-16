@@ -1,9 +1,12 @@
+import os
 from typing import Dict, Literal
 import datetime
 
 from matplotlib import pyplot as plt
 
 import numpy as np
+
+from mestDS.utils.main import train_test_split_csv
 from .ClimateHealthData import Obs
 from .RainSeason import RainSeason
 from .Region import Region
@@ -175,7 +178,11 @@ class Simulation:
 
         plt.close(fig)
 
-    def simulated_data_to_csv(self, filepath):
+    def simulated_data_to_csv(self, dir_path, file_name):
+        self.dir_path = dir_path
+        os.makedirs(dir_path, exist_ok=True)
+        self.dataset_file_path = os.path.join(dir_path, file_name)
+
         header = [
             "time_period",
             "rainfall",
@@ -185,15 +192,18 @@ class Simulation:
         ]
         rows = []
         for region in self.regions:
-            for obs in self.simulated_data[region]:
+            for obs in self.simulated_data[region.name]:
                 row = []
                 row.append(obs.time_period)
                 row.append(obs.rainfall)
                 row.append(obs.mean_temperature)
                 row.append(obs.disease_cases)
-                row.append(region)
+                row.append(region.name)
                 rows.append(row)
-        with open(filepath, mode="w", newline="") as file:
+        with open(self.dataset_file_path, mode="w", newline="") as file:
             writer = csv.writer(file)
             writer.writerow(header)
             writer.writerows(rows)
+
+    def split_csv_to_train_and_test(self, test_size=0.2):
+        train_test_split_csv(self.dataset_file_path, self.dir_path, test_size)

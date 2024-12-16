@@ -92,7 +92,9 @@ def train_test_split_csv(file, directory_to_store, test_size=0.2):
     print(f"Data split completed by location. Files saved in {directory_to_store}")
 
 
-def plot_data_with_sample_0(data_file, sample_0_file, filename):
+def plot_data_with_sample_0(
+    data_file, sample_0_file, dir_path, split_regions=True, subtitle=""
+):
     """
     Plots data from the main CSV file and adds the 'sample_0' column from another CSV file.
     Args:
@@ -113,12 +115,11 @@ def plot_data_with_sample_0(data_file, sample_0_file, filename):
     # Plot the data for each location
     locations = merged_df["location"].unique()
 
-    plt.figure(figsize=(12, 8))
-
     # Loop through each location and plot its data
     for location in locations:
         location_data = merged_df[merged_df["location"] == location]
 
+        plt.figure(figsize=(12, 8))
         # Plot disease_cases, rainfall, mean_temperature, and sample_0 over time
         plt.plot(
             location_data["time_period"],
@@ -131,14 +132,15 @@ def plot_data_with_sample_0(data_file, sample_0_file, filename):
             label=f"{location} - Predicated Cases",
             linestyle=":",
         )
+        # Add labels and legend
+        plt.suptitle("Disease Cases and Predicted Disease Cases over Time")
+        plt.title(subtitle)
+        plt.xlabel("Time Period")
+        plt.ylabel("Values")
+        plt.legend()
+        plt.xticks(rotation=45)
+        plt.tight_layout()
 
-    # Add labels and legend
-    plt.title("Disease Cases and Predicted Disease Cases over Time")
-    plt.xlabel("Time Period")
-    plt.ylabel("Values")
-    plt.legend()
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-
-    # Show the plot
-    plt.savefig(filename)
+        # Show the plot
+        plt.savefig(f"{dir_path}/{location}.png")
+        plt.close()

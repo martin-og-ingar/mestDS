@@ -3,10 +3,10 @@ simulation:
     time_granularity: "D"
     simulation_length: 500
   sims:
-    - beta_rainfall: 0.5
+    - beta_rainfall: 1.5
       beta_lag_sickness: 0.4
-    - beta_rainfall: 0.9
-      beta_lag_sickness: 0.5
+    - beta_rainfall: 0.3
+      beta_lag_sickness: 1.9
     - beta_rainfall: 0.5
       beta_lag_sickness: 0.9
   regions:

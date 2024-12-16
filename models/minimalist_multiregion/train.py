@@ -3,7 +3,7 @@ import argparse
 import joblib
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-from .utils import get_df_per_location
+from utils import get_df_per_location
 
 
 def read_pandas_from_csv(csv_file):
