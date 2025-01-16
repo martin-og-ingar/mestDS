@@ -8,7 +8,7 @@ class Region:
     rain_season: list[RainSeason]
     neighbour: list[int]
 
-    def __init__(self, name="Masadi", region_id=1, rain_season=[], neighbour=[2]):
+    def __init__(self, name="", region_id=0, rain_season=[], neighbour=[]):
         self.name = name
         self.region_id = region_id
         self.rain_season = rain_season
