@@ -1,0 +1,12 @@
+__pycache__/
+**/.egg
+*.egg
+*.egg-info
+.venv/
+dist/
+runs/
+scripts/runs/
+/scripts/testing.py
+discord.deb
+datasets/
+*.zip
