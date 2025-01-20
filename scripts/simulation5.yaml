@@ -1,35 +1,36 @@
 model:
   time_granularity: "D"
-  simulation_length: 100
-  sickness_calculation_method: "linear"
+  simulation_length: 104
   features:
-    - name: "rain"
-      parameters: []
+    - name: "rainfall"
       function: |
         def get_rainfall(region, i):
+          i = (i - 1) % 52 + 1
           rain_season = False
           for season in region.rain_season:
             if season.start <= i <= season.end:
               rain_season = True
           if rain_season:
-              return np.random.gamma(shape=6, scale=1.0) * 2
+              return np.random.gamma(shape=6, scale=1.0) * 4
           else:
-              return np.random.gamma(shape=2, scale=0.5) * 0.5
-    - name: "temperature"
-      parameters: ["rain"]
+              return np.random.gamma(shape=2, scale=0.5) * 2
+    - name: "mean_temperature"
       function: |
-        def get_temperature(rain, i):
+        def get_temperature(i):
+          i = (i - 1) % 52 + 1
           seasonal_temp = 24 + 5 * np.sin(2 * np.pi * i / 52)
-          if rain[-1] > 50:
-            seasonal_temp -= 3
           random_noise = np.random.normal(0, 2)
           return seasonal_temp + random_noise
     - name: "lagged_sickness"
-      parameters: ["sickness"]
-      calculation: "parameters['sickness'][-1]"
-    - name: "sickness"
-      parameters: ["lagged_sickness"]
-      calculation: "parameters['lagged_sickness'][-1] * np.random.uniform(0.7,1.3)"
+      function: |
+        def get_lagged_sickness(disease_cases):
+          return disease_cases[-1]
+    - name: "disease_cases"
+      function: |
+        def get_disease_cases(mean_temperature, rainfall, lagged_sickness):
+          sickness = (mean_temperature[-1] * 0.2) + (rainfall[-1] *0.12) + (lagged_sickness[-1] * 0.7)
+          return sickness
+
   regions:
     - name: "Finnmark"
       region_id: 1
@@ -37,7 +38,7 @@ model:
       neighbour: [2]
     - name: "Troms"
       region_id: 2
-      rain_season: [[10, 20], [25, 45]]
+      rain_season: [[10, 16], [37, 45]]
       neighbour: [1, 3]
     - name: "Nordland"
       region_id: 3

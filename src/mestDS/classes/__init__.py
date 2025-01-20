@@ -1,4 +1,5 @@
-from .Simulation import Simulation
-from .Simulation import RainSeason
+from .SimulationLegacy import SimulationLegacy
+from .SimulationLegacy import RainSeason
 from .Region import Region
-from .MultipleSimulations import MultipleSimulations
+from .MultipleSimulationsLegacy import MultipleSimulationsLegacy
+from .Simulation import Simulation, Simulations
