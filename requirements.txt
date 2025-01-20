@@ -1,4 +1,0 @@
-numpy
-matplotlib
-chap-core
-climate-health
