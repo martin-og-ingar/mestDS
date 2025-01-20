@@ -1,0 +1,65 @@
+'''
+Values not specified in the yml file will use default values specified in the Simulation file
+You can define your own country, use the default counrty or select a counrty from our repository
+
+You can create one simulation by just defining base. If you wish to generate multiple simulations,
+you can use grid_evaluation where you can define which values to be included in the grid evaluation and the values to be tested.
+If values is not defined, it will use a low, medium and high value. 
+
+If you can also use sim, then you will have more control over the specified simulations. In sim you can define values for specific attributes.
+'''
+
+#How to define a country yourself
+country:
+  id: "Norway"
+  regions:
+    region:
+      id: "Finnmark"
+      neighbours: ["Troms"]
+      rain_season: { 10, 23 }, { 40, 50 }
+    region:
+      id: "Troms"
+      neighbours: Finnmark, Nordland
+      rain_season: { 10, 24 }, { 37, 49 }
+    region:
+      id: "Nordland"
+      neighbours: Troms, Trøndelag
+      rain_season: { 10, 24 }, { 37, 49 }
+
+#One simulation
+simulations:
+  base:
+    time_granularity: "D"
+    simulation_length: 500
+    country: "Norway" 
+    beta_lag_sickness: 0.3
+
+#Multiple simulations with grid_evaluation
+
+simulations:
+  base:
+    time_granularity: "D"
+    simulation_length: 500
+    country: "Norway" 
+    
+  grid_evaluation:
+    attributes: beta_lag_sickness, beta_rain, beta_temp, beta_neighbour_influence, noise_std
+    values: 0.0,0.2,0.5,0.7,1.0
+
+
+#Multiple simulations wuth sim
+
+simulations:
+  base:
+    time_granularity: "D"
+    simulation_length: 500
+    country: "Norway" 
+  sim:
+    beta_rain: 0.5
+    beta_lag_sickness: 0.9
+  sim:
+    beta_rain: 0.2
+    beta_lag_sickness: 0.3
+  sim:
+    beta_rain: 0.6
+    beta_lag_sickness: 0.5
