@@ -1,11 +1,6 @@
-# Welcome to your Jupyter Book
+# Welcome to mestDS simulation framework
 
-This is a small sample book to give you a feel for how book content is
-structured.
-It shows off a few of the major file types, as well as some sample content.
-It does not go in-depth into any particular topic - check out [the Jupyter Book documentation](https://jupyterbook.org) for more information.
+This is a small sample book to give you a feel for how to use our simulation framework.
+Our intention is to show-case how to use it, and display the possibilities it provides you.
 
-Check out the content pages bundled with this sample book to see more.
-
-```{tableofcontents}
-```
+<!--{{tableofcontents}}-->
