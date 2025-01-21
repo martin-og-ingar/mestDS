@@ -6,11 +6,11 @@ import yaml
 
 from mestDS.classes import RainSeason, Region
 from mestDS.utils.main import plot_data_with_sample_0
-from . import Simulation
+from .SimulationLegacy import SimulationLegacy
 
 
-class MultipleSimulations:
-    simulations: List[Simulation]
+class MultipleSimulationsLegacy:
+    simulations: List[SimulationLegacy]
 
     def __init__(self, yaml_path):
         self.simulations = parse_yaml(yaml_path)
@@ -76,7 +76,7 @@ class MultipleSimulations:
 def parse_yaml(yaml_path):
     parameters = load_yaml(yaml_path)
     simulations = []
-    sim_base = Simulation()
+    sim_base = SimulationLegacy()
     regions = parameters.get("simulation", {}).get("regions", {})
     region_list = []
     for reg in regions:
@@ -100,7 +100,7 @@ def parse_yaml(yaml_path):
     sims = parameters.get("simulation", {}).get("sims", {})
     if sims:
         for i, sim in enumerate(sims):
-            simulation = Simulation()
+            simulation = SimulationLegacy()
             simulation.__dict__.update(sim_base.__dict__)
             for key, value in sim.items():
                 simulation.__setattr__(key, value)

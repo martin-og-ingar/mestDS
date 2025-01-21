@@ -4,10 +4,10 @@ from ..classes.ClimateHealthData import Obs
 from ..default_variables import DATEFORMAT, TIMEDELTA, DEFAULT_TEMPERATURES
 import numpy as np
 from datetime import datetime
-from ..classes.Simulation import Simulation
+from ..classes.SimulationLegacy import SimulationLegacy
 
 
-def generate_data(simulation: Simulation):
+def generate_data(simulation: SimulationLegacy):
     data_observation = {region.name: [] for region in simulation.regions}
     for region in simulation.regions:
 
