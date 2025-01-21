@@ -1,3 +1,4 @@
+import copy
 import csv
 import datetime
 import inspect
@@ -42,6 +43,7 @@ class Simulation:
     lists: list[List]
     current_i: int
     current_region: str
+    simulation_name: str
 
     def simulate(self):
         self.simulation_start_date = datetime.date(2024, 1, 1)
@@ -229,7 +231,29 @@ def parse_yaml(yaml_path):
             sim_base.features = features
         else:
             sim_base.__setattr__(key, value)
-    return [sim_base]
+    simulations = parameters.get("simulations", {})
+    sims = [sim_base]
+    for simulation in simulations:
+        sim = copy.deepcopy(sim_base)
+        for key, value in simulation.items():
+            if key == "features":
+                for feat in value:
+                    print(type(sim.features[0]))
+                    feat_name = feat.get("name")
+                    if feat_name is None:
+                        raise ValueError
+                    index = next(
+                        (
+                            i
+                            for i, feature in enumerate(sim.features)
+                            if feat_name == feature.name
+                        )
+                    )
+                    sim.features[index].function = feat.get("function", {})
+            else:
+                sim.__setattr__(key, value)
+        sims.append(sim)
+    return sims
 
 
 def load_yaml(yaml_path):

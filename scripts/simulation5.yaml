@@ -47,3 +47,36 @@ model:
       region_id: 4
       rain_season: [[5, 10], [15, 25], [45, 52]]
       neighbour: [3]
+
+simulations:
+  - simulation_name: "sim1"
+    features:
+      - name: "lagged_sickness"
+        function: |
+          def get_lagged_sickness(disease_cases):
+            if len(disease_cases) > 2: 
+              return disease_cases[-2]
+            else:
+              return disease_cases[-1]
+      - name: "disease_cases"
+        function: |
+          def get_disease_cases(mean_temperature, rainfall, lagged_sickness):
+            sickness = (mean_temperature[-1] * 0.2) + (rainfall[-1] *0.12) + (lagged_sickness[-1] * 0.7)
+            sickness = sickness + np.random.randint(-3,3)
+            return sickness
+  - simulation_name: "sim2"
+    features:
+      - name: "disease_cases"
+        function: |
+          def get_disease_cases(mean_temperature, rainfall, lagged_sickness):
+            sickness = (mean_temperature[-1] * 0.2) + (rainfall[-1] *0.12) + (lagged_sickness[-1] * 0.7)
+            sickness = sickness + np.random.randint(-3,3)
+            return sickness
+  - simulation_name: "sim3"
+    features:
+      - name: "disease_cases"
+        function: |
+          def get_disease_cases(mean_temperature, rainfall, lagged_sickness):
+            sickness = (mean_temperature[-1] * 0.7) + (rainfall[-1] *0.82) + (lagged_sickness[-1] * 0.7)
+            sickness = sickness + np.random.randint(-3,3)
+            return sickness
