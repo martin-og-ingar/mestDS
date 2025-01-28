@@ -1,0 +1,48 @@
+model:
+  time_granularity: "D"
+  simulation_length: 100
+  sickness_calculation_method: "linear"
+  features:
+    - name: "rain"
+      parameters: []
+      function: |
+        def get_rainfall(region, i):
+          rain_season = False
+          for season in region.rain_season:
+            if season.start <= i <= season.end:
+              rain_season = True
+          if rain_season:
+              return np.random.gamma(shape=6, scale=1.0) * 2
+          else:
+              return np.random.gamma(shape=2, scale=0.5) * 0.5
+    - name: "temperature"
+      parameters: ["rain"]
+      function: |
+        def get_temperature(rain, i):
+          seasonal_temp = 24 + 5 * np.sin(2 * np.pi * i / 52)
+          if rain[-1] > 50:
+            seasonal_temp -= 3
+          random_noise = np.random.normal(0, 2)
+          return seasonal_temp + random_noise
+    - name: "lagged_sickness"
+      parameters: ["sickness"]
+      calculation: "parameters['sickness'][-1]"
+    - name: "sickness"
+      parameters: ["lagged_sickness"]
+      calculation: "parameters['lagged_sickness'][-1] * np.random.uniform(0.7,1.3)"
+  regions:
+    - name: "Finnmark"
+      region_id: 1
+      rain_season: [[10, 23], [45, 52]]
+      neighbour: [2]
+    - name: "Troms"
+      region_id: 2
+      rain_season: [[10, 20], [25, 45]]
+      neighbour: [1, 3]
+    - name: "Nordland"
+      region_id: 3
+      neighbour: [2, 4]
+    - name: "Trøndelag"
+      region_id: 4
+      rain_season: [[5, 10], [15, 25], [45, 52]]
+      neighbour: [3]
