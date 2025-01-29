@@ -158,15 +158,18 @@ class Simulations:
     def convert_to_csvs(self, folder_path):
         self.folder_path = folder_path
         for i, simulation in enumerate(self.simulations):
-            os.makedirs(os.path.dirname(f"{folder_path}{i}/"), exist_ok=True)
-            file_path = f"{folder_path}{i}/dataset.csv"
+            os.makedirs(
+                os.path.dirname(f"{folder_path}{simulation.simulation_name}/"),
+                exist_ok=True,
+            )
+            file_path = f"{folder_path}{simulation.simulation_name}/dataset.csv"
             simulation.convert_to_csv(file_path)
 
     def csv_train_test_split(self):
-        for i in range(len(self.simulations)):
+        for i, simulation in enumerate(self.simulations):
             train_test_split_csv(
-                f"{self.folder_path}{i}/dataset.csv",
-                f"{self.folder_path}{i}/",
+                f"{self.folder_path}{simulation.simulation_name or i}/dataset.csv",
+                f"{self.folder_path}{simulation.simulation_name or i}/",
             )
 
     def eval_chap_model(self, model_name):
@@ -175,29 +178,29 @@ class Simulations:
         """
         self.csv_train_test_split()
 
-        for i in range(len(self.simulations)):
+        for simulation in self.simulations:
             train_command = [
                 "python",
                 f"{model_name}/train.py",
-                f"{self.folder_path}{i}/dataset_train.csv",
-                f"{self.folder_path}{i}/model.bin",
+                f"{self.folder_path}{simulation.simulation_name}/dataset_train.csv",
+                f"{self.folder_path}{simulation.simulation_name}/model.bin",
             ]
             subprocess.run(train_command, check=True)
 
             test_command = [
                 "python",
                 f"{model_name}/predict.py",
-                f"{self.folder_path}{i}/model.bin",
+                f"{self.folder_path}{simulation.simulation_name}/model.bin",
                 "",
-                f"{self.folder_path}{i}/dataset_x_test.csv",
-                f"{self.folder_path}{i}/predictions.csv",
+                f"{self.folder_path}{simulation.simulation_name}/dataset_x_test.csv",
+                f"{self.folder_path}{simulation.simulation_name}/predictions.csv",
             ]
 
             subprocess.run(test_command, check=True)
             plot_data_with_sample_0(
-                f"{self.folder_path}{i}/dataset_y_test.csv",
-                f"{self.folder_path}{i}/predictions.csv",
-                f"{self.folder_path}{i}",
+                f"{self.folder_path}{simulation.simulation_name}/dataset_y_test.csv",
+                f"{self.folder_path}{simulation.simulation_name}/predictions.csv",
+                f"{self.folder_path}{simulation.simulation_name}",
                 True,
             )
 
