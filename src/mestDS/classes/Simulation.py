@@ -126,13 +126,15 @@ class Simulation:
 
     def convert_to_csv(self, file_path):
         csv_rows = []
-        columns = [feature.name for feature in self.features]
+        columns = ["time_period"]
+        columns += [feature.name for feature in self.features]
         columns.append("location")
         csv_rows.append(columns)
 
         for region in self.regions:
             for i in range(len(self.data[region.name][self.features[0].name])):
                 row = []
+                row.append(self.data[region.name]["time_period"][i])
                 for feature in self.features:
                     row.append(self.data[region.name][feature.name][i])
                 row.append(region.name)
