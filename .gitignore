@@ -8,6 +8,7 @@ __pycache__
 !LICENSE
 !.gitignore
 !src/
+!src/*
 !src/**
 !requirements.txt
 !tutorials/
