@@ -5,7 +5,8 @@ from typing import List
 import yaml
 
 from mestDS.classes import RainSeason, Region
-from mestDS.utils.main import plot_data_with_sample_0
+
+# from mestDS.utils.main import plot_data_with_sample_0
 from .SimulationLegacy import SimulationLegacy
 
 
@@ -64,13 +65,13 @@ class MultipleSimulationsLegacy:
             subprocess.run(test_command, check=True)
 
             plot_subtitle = f"Rain beta: {simulation.beta_rainfall}, Temp beta: {simulation.beta_temp}, Neighbour beta: {simulation.beta_neighbour_influence}, Sickness lag beta: {simulation.beta_lag_sickness}"
-            plot_data_with_sample_0(
-                f"{simulation.dir_path}/dataset_y_test.csv",
-                f"{simulation.dir_path}/predictions.csv",
-                simulation.dir_path,
-                True,
-                plot_subtitle,
-            )
+            # plot_data_with_sample_0(
+            #     f"{simulation.dir_path}/dataset_y_test.csv",
+            #     f"{simulation.dir_path}/predictions.csv",
+            #     simulation.dir_path,
+            #     True,
+            #     plot_subtitle,
+            # )
 
 
 def parse_yaml(yaml_path):
