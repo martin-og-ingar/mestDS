@@ -13,7 +13,7 @@ import numpy as np
 
 from mestDS.classes import RainSeason
 from mestDS.default_variables import DATEFORMAT, TIMEDELTA
-from mestDS.utils.main import plot_data_with_sample_0, train_test_split_csv
+from mestDS.utils.main import generate_report, train_test_split_csv
 
 from .Feature import Feature
 from .Region import Region
@@ -199,11 +199,13 @@ class Simulations:
             ]
 
             subprocess.run(test_command, check=True)
-            plot_data_with_sample_0(
+            generate_report(
                 f"{self.folder_path}{simulation.simulation_name}/dataset_y_test.csv",
                 f"{self.folder_path}{simulation.simulation_name}/predictions.csv",
                 f"{self.folder_path}{simulation.simulation_name}",
                 True,
+                model_name=model_name,
+                simulation_name=simulation.simulation_name,
             )
 
     def plot_data(self):
