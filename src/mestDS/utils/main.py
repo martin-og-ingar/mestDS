@@ -13,7 +13,12 @@ from sklearn.metrics import (
 from fpdf import FPDF
 
 
-def train_test_split_csv(file, directory_to_store, test_size=0.2):
+def train_test_split_csv(
+    file,
+    directory_to_store,
+    exclude_feature,
+    test_size=0.2,
+):
     """
     Splits a CSV file into train, x_test, and y_test with an 80/20 split for each location,
     and includes location and time_period in the y_test file.
@@ -23,24 +28,22 @@ def train_test_split_csv(file, directory_to_store, test_size=0.2):
     - directory_to_store (str): The directory where the split files should be saved.
     - test_size (float): The proportion of the data for each location to be used for testing (20% by default).
     """
-    header = [
-        "time_period",
-        "rainfall",
-        "mean_temperature",
-        "disease_cases",
-        "location",
-    ]
 
     # Read the entire file into a list of rows
     with open(file, mode="r") as f:
         reader = csv.reader(f)
-        next(reader)  # Skip header row
+        header = next(reader)
         rows = list(reader)
 
+    exclude_indices = [header.index(feature) for feature in exclude_feature]
+    header = [col for col in header if col not in exclude_feature]
     # Group the rows by location
     location_data = defaultdict(list)
     for row in rows:
+        row = [value for i, value in enumerate(row) if i not in exclude_indices]
         location_data[row[header.index("location")]].append(row)
+
+    location_data = location_data
 
     # Initialize lists for training and testing data
     train_rows = []
@@ -49,14 +52,18 @@ def train_test_split_csv(file, directory_to_store, test_size=0.2):
     # Split each location's data
     for location, data in location_data.items():
         # Sort the data by 'time_period' to ensure chronological order
-        data.sort(key=lambda row: row[header.index("time_period")])
+        data.sort(
+            key=lambda row: datetime.strptime(
+                row[header.index("time_period")], "%Y-%m-%d"
+            )
+        )
 
         # Split the data into train and test based on test_size
         test_size_count = int(len(data) * test_size)
 
         # Take the first 'test_size_count' for the test set and the rest for the train set
-        test_rows.extend(data[:test_size_count])  # 20% for testing
-        train_rows.extend(data[test_size_count:])  # 80% for training
+        train_rows.extend(data[:-test_size_count])  # 80% for training
+        test_rows.extend(data[-test_size_count:])
 
     # Write the training data to a new file
     train_file = (
