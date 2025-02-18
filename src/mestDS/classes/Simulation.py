@@ -14,7 +14,6 @@ import numpy as np
 from mestDS.classes import RainSeason
 from mestDS.default_variables import DATEFORMAT, TIMEDELTA
 from mestDS.utils.main import plot_data_with_sample_0, train_test_split_csv
-from scripts import simulation
 
 from .Feature import Feature
 from .Region import Region
@@ -59,7 +58,6 @@ class Simulation:
                 self.current_region = region
                 for feature in self.features:
                     self.calculate_feature(feature)
-        self.plot_data()
 
     def adjust_beta(self):
         beta_values = [feature.beta for feature in self.features]
@@ -119,6 +117,7 @@ class Simulation:
                 for var in variables:
                     plt.plot(self.data[region][var], label=f"{region} - {var}")
 
+                plt.title(self.simulation_name)
                 plt.xlabel("Time")
                 plt.ylabel("Values")
                 plt.legend()
