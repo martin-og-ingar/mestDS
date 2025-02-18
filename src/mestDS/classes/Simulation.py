@@ -166,18 +166,19 @@ class Simulations:
             file_path = f"{folder_path}{simulation.simulation_name}/dataset.csv"
             simulation.convert_to_csv(file_path)
 
-    def csv_train_test_split(self):
+    def csv_train_test_split(self, exclude_features):
         for i, simulation in enumerate(self.simulations):
             train_test_split_csv(
                 f"{self.folder_path}{simulation.simulation_name or i}/dataset.csv",
                 f"{self.folder_path}{simulation.simulation_name or i}/",
+                exclude_feature=exclude_features,
             )
 
-    def eval_chap_model(self, model_name):
+    def eval_chap_model(self, model_name, exclude_features=[]):
         """
         This function
         """
-        self.csv_train_test_split()
+        self.csv_train_test_split(exclude_features)
 
         for simulation in self.simulations:
             train_command = [
@@ -246,7 +247,6 @@ def parse_yaml(yaml_path):
         for key, value in simulation.items():
             if key == "features":
                 for feat in value:
-                    print(type(sim.features[0]))
                     feat_name = feat.get("name")
                     if feat_name is None:
                         raise ValueError
