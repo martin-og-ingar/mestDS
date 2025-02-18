@@ -193,7 +193,7 @@ class Simulations:
                 "python",
                 f"{model_name}/predict.py",
                 f"{self.folder_path}{simulation.simulation_name}/model.bin",
-                "",
+                f"{self.folder_path}{simulation.simulation_name}/dataset_train.csv",
                 f"{self.folder_path}{simulation.simulation_name}/dataset_x_test.csv",
                 f"{self.folder_path}{simulation.simulation_name}/predictions.csv",
             ]
