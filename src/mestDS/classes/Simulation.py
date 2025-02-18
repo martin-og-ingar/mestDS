@@ -204,6 +204,10 @@ class Simulations:
                 True,
             )
 
+    def plot_data(self):
+        for sim in self.simulations:
+            sim.plot_data()
+
 
 def parse_yaml(yaml_path):
     parameters = load_yaml(yaml_path)
