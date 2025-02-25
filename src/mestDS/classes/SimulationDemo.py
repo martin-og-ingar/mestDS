@@ -80,12 +80,14 @@ class SimulationDemo:
 
         func = mod.get("function")
         mod_func = FUNCTION_POOL.get(func)
+        params = mod.get("params", {})
+        params["t"] = self.simulation_length
+        params["current_i"] = self.current_i
         if func == "autoregression":
             history = self.data[self.current_region.name][feature_name]
             params["history"] = history
         else:
             history = None
-        params = mod.get("params", {})
         if func == "realistic_data_generation":
             if (
                 isinstance(self.real_data, (list, np.ndarray))
@@ -93,9 +95,7 @@ class SimulationDemo:
             ):
                 self.real_data = self.data[self.current_region.name][feature_name]
 
-                self.data[self.current_region.name][feature_name] = mod_func(
-                    **params, t=self.simulation_length, current_i=self.current_i
-                )
+                self.data[self.current_region.name][feature_name] = mod_func(**params)
 
         else:
             if func == "climate_dependent_disease_cases":
@@ -105,11 +105,7 @@ class SimulationDemo:
                 params["temperature"] = self.data[self.current_region.name][
                     "temperature"
                 ][self.current_i]
-            modified_data = mod_func(
-                **params,
-                t=self.simulation_length,
-                current_i=self.current_i,
-            )
+            modified_data = mod_func(**params)
 
             self.data[self.current_region.name][feature_name][
                 self.current_i
@@ -131,6 +127,7 @@ class SimulationDemo:
 
                 plt.xlabel("Time")
                 plt.ylabel("Values")
+                plt.title(self.simulation_name)
                 plt.legend()
                 plt.tight_layout()
                 plt.show()
@@ -195,18 +192,33 @@ def parse_yaml(yaml_path):
         for key, value in simulation.items():
             if key == "features":
                 for feat in value:
-                    print(type(sim.features[0]))
                     feat_name = feat.get("name")
                     if feat_name is None:
                         raise ValueError
-                    index = next(
+                    base_feature = next(
                         (
-                            i
-                            for i, feature in enumerate(sim.features)
-                            if feat_name == feature.name
-                        )
+                            feature
+                            for feature in sim.features
+                            if feature.name == feat_name
+                        ),
+                        None,
                     )
-                    sim.features[index].function = feat.get("function", {})
+
+                    if base_feature:
+                        base_feature_copy = copy.deepcopy(base_feature)
+                        new_modification = feat.get("modification", [])
+
+                        if new_modification:
+                            base_feature_copy.modification = new_modification
+                        else:
+                            base_feature_copy.modification = base_feature.modification
+
+                        sim.features = [
+                            f if f.name != feat_name else base_feature_copy
+                            for f in sim.features
+                        ]
+                    else:
+                        sim.features.append(feat)
             else:
                 sim.__setattr__(key, value)
         sims.append(sim)

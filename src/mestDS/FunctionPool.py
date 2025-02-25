@@ -12,21 +12,21 @@ def random_walk(t):
     return walk
 
 
-def normal_distribution(mean, std_dev, t, current_i):
+def normal_distribution(mean, std_dev):
     return np.random.normal(mean, std_dev)
 
 
-def poisson_distribution(lam, scale, t, current_i):
+def poisson_distribution(lam, scale, t=None, current_i=None):
     events = np.random.poisson(lam)
     rainfall = events * np.random.exponential(scale)
     return rainfall
 
 
-def exponential_growth(rate, t, current_i):
+def exponential_growth(rate, t):
     return np.exp(rate * t)
 
 
-def lognormal(mean, std_dev, t, current_i):
+def lognormal(mean, std_dev):
     return np.random.lognormal(mean, std_dev)
 
 
@@ -42,24 +42,24 @@ def picewivse_trend(rate1, rate2, switch, t, current_i):
     )
 
 
-def extreme_event(probability, magnitude, t, current_i):
+def extreme_event(probability, magnitude):
     return magnitude if np.random.rand() < probability else 0
 
 
-def seasonal(average, amplitude, phase, t, current_i):
+def seasonal(average, amplitude, phase, current_i, t=None):
     sine_wave = average + amplitude * np.sin(2 * np.pi * current_i / 365 + phase)
     return sine_wave
 
 
-def trend(rate, t, current_i):
+def trend(rate, t):
     return rate * t
 
 
-def stochastic_noise(mean, std_dev, t, current_i):
+def stochastic_noise(mean, std_dev, t=None, current_i=None):
     return np.random.normal(mean, std_dev)
 
 
-def autoregression(phi, noise_std, history, t, current_i):
+def autoregression(phi, noise_std, history, current_i, t=None):
     p = len(phi)
     if len(history) < p:
         return ValueError("NOT ENOUGH HISTORY")
@@ -72,7 +72,7 @@ def autoregression(phi, noise_std, history, t, current_i):
 
 
 def climate_dependent_disease_cases(
-    temp_effect, rain_effect, rainfall, temperature, t, current_i
+    temp_effect, rain_effect, rainfall, temperature, t=None, current_i=None
 ):
     # temp effect
     temp_mod = temp_effect * temperature
@@ -85,7 +85,7 @@ def climate_dependent_disease_cases(
     return estimated_cases
 
 
-def realistic_data_generation(feature_name, t, current_i):
+def realistic_data_generation(feature_name, t):
     df = ISIMIP_dengue_harmonized["brazil"].to_pandas()
     feature = df[feature_name].values[:t]
     feature = (feature / feature.max()) * 4
