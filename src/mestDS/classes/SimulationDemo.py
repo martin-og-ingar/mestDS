@@ -1,13 +1,11 @@
 import copy
 import csv
 import datetime
-import inspect
 import os
-import random
+import sys
 import subprocess
 from typing import Dict, Literal
 
-from sympy import sympify
 import yaml
 import numpy as np
 
@@ -42,12 +40,12 @@ class SimulationDemo:
     current_region: str
     simulation_name: str
     history: list[float]
-    real_data: list[float]
+    real_data: dict[str, list[float]]
 
     def simulate(self):
         self.simulation_start_date = datetime.date(2024, 1, 1)
         self.initialize_data()
-        self.real_data = []
+        self.real_data = {}
 
         delta = TIMEDELTA[self.time_granularity]
         for i in range(1, self.simulation_length):
@@ -89,23 +87,24 @@ class SimulationDemo:
         else:
             history = None
         if func == "realistic_data_generation":
-            if (
-                isinstance(self.real_data, (list, np.ndarray))
-                and len(self.real_data) == 0
-            ):
-                self.real_data = self.data[self.current_region.name][feature_name]
-
+            # if (
+            #     isinstance(self.real_data, (list, np.ndarray))
+            #     and len(self.real_data) == 0
+            # ):
+            if feature_name not in self.real_data:
+                self.real_data[feature_name] = (
+                    self.data[self.current_region.name].get(feature_name, []).copy()
+                )
                 self.data[self.current_region.name][feature_name] = mod_func(**params)
-
         else:
             if func == "climate_dependent_disease_cases":
-                params["rainfall"] = self.data[self.current_region.name]["rainfall"][
-                    self.current_i
-                ]
+                params["rainfall"] = self.data[self.current_region.name]["rainfall"]
                 params["temperature"] = self.data[self.current_region.name][
                     "temperature"
-                ][self.current_i]
-            modified_data = mod_func(**params)
+                ]
+            modified_data = mod_func(
+                **params,
+            )
 
             self.data[self.current_region.name][feature_name][
                 self.current_i
@@ -132,6 +131,24 @@ class SimulationDemo:
                 plt.tight_layout()
                 plt.show()
 
+    def convert_to_csv(self, file_path):
+        csv_rows = []
+        columns = list(self.data[self.current_region.name].keys())
+        columns.append("location")
+        csv_rows.append(columns)
+
+        for region in self.regions:
+            for i in range(len(self.data[region.name]["time_period"])):
+                row = []
+                row.append(self.data[region.name]["time_period"][i])
+                for feature in self.features:
+                    row.append(self.data[region.name][feature.name][i])
+                row.append(region.name)
+                csv_rows.append(row)
+        with open(file_path, "w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerows(csv_rows)
+
 
 class SimulationsDemo:
     simulations: list[SimulationDemo]
@@ -144,6 +161,55 @@ class SimulationsDemo:
     def simulate(self):
         for simulation in self.simulations:
             simulation.simulate()
+
+    def convert_to_csvs(self, folder_path):
+        self.folder_path = folder_path
+        for i, simulation in enumerate(self.simulations):
+            os.makedirs(
+                os.path.dirname(f"{folder_path}{simulation.simulation_name}/"),
+                exist_ok=True,
+            )
+            file_path = f"{folder_path}{simulation.simulation_name}/dataset.csv"
+            simulation.convert_to_csv(file_path)
+
+    def csv_train_test_split(self):
+        for i, simulation in enumerate(self.simulations):
+            train_test_split_csv(
+                f"{self.folder_path}{simulation.simulation_name or i}/dataset.csv",
+                f"{self.folder_path}{simulation.simulation_name or i}/",
+            )
+
+    def eval_chap_model(self, model_name):
+        """
+        This function
+        """
+        self.csv_train_test_split()
+
+        for simulation in self.simulations:
+            train_command = [
+                sys.executable,
+                f"{model_name}/train.py",
+                f"{self.folder_path}{simulation.simulation_name}/dataset_train.csv",
+                f"{self.folder_path}{simulation.simulation_name}/model.bin",
+            ]
+            subprocess.run(train_command, check=True)
+
+            test_command = [
+                sys.executable,
+                f"{model_name}/predict.py",
+                f"{self.folder_path}{simulation.simulation_name}/model.bin",
+                "",
+                f"{self.folder_path}{simulation.simulation_name}/dataset_x_test.csv",
+                f"{self.folder_path}{simulation.simulation_name}/predictions.csv",
+            ]
+
+            subprocess.run(test_command, check=True)
+            plot_data_with_sample_0(
+                f"{self.folder_path}{simulation.simulation_name}/dataset_y_test.csv",
+                f"{self.folder_path}{simulation.simulation_name}/predictions.csv",
+                f"{self.folder_path}{simulation.simulation_name}",
+                True,
+            )
 
 
 def parse_yaml(yaml_path):

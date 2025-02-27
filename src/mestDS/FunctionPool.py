@@ -12,7 +12,7 @@ def random_walk(t):
     return walk
 
 
-def normal_distribution(mean, std_dev):
+def normal_distribution(mean, std_dev, t=None, current_i=None):
     return np.random.normal(mean, std_dev)
 
 
@@ -42,7 +42,7 @@ def picewivse_trend(rate1, rate2, switch, t, current_i):
     )
 
 
-def extreme_event(probability, magnitude):
+def extreme_event(probability, magnitude, t=None, current_i=None):
     return magnitude if np.random.rand() < probability else 0
 
 
@@ -72,20 +72,26 @@ def autoregression(phi, noise_std, history, current_i, t=None):
 
 
 def climate_dependent_disease_cases(
-    temp_effect, rain_effect, rainfall, temperature, t=None, current_i=None
+    temp_effect,
+    rain_effect,
+    rainfall,
+    lag,
+    temperature,
+    current_i,
+    t=None,
 ):
-    # temp effect
-    temp_mod = temp_effect * temperature
-    # rainfall effect
-
-    rain_mod = rain_effect * rainfall
-
+    if current_i < lag or lag == 0:
+        temp_mod = temp_effect * temperature[current_i]
+        rain_mod = rain_effect * rainfall[current_i]
+    else:
+        temp_mod = temp_effect * temperature[current_i - lag + 1]
+        rain_mod = rain_effect * rainfall[current_i - lag + 1]
     estimated_cases = temp_mod + rain_mod
 
     return estimated_cases
 
 
-def realistic_data_generation(feature_name, t):
+def realistic_data_generation(feature_name, t, current_i=None):
     df = ISIMIP_dengue_harmonized["brazil"].to_pandas()
     feature = df[feature_name].values[:t]
     feature = (feature / feature.max()) * 4

@@ -1,25 +1,29 @@
 model:
   simulation_name: "climate_dependent_non_autoregressive"
   time_granularity: "D"
-  simulation_length: 100
+  simulation_length: 50
   baseline_func: "constant"
   features:
     - name: "rainfall"
       modification:
-        - function: "poisson_distribution"
+        - function: "normal_distribution"
           params:
-            lam: 2
-            scale: 1
-        # - function: "stochastic_noise"
-        #   params:
-        #     mean: 1
-        #     std_dev: 2
+            mean: 2
+            std_dev: 1
+        - function: "stochastic_noise"
+          params:
+            mean: 1
+            std_dev: 2
+        - function: "extreme_event"
+          params:
+            probability: 0.1
+            magnitude: 50
     - name: "temperature"
       modification:
         - function: "seasonal"
           params:
-            average: 30
-            amplitude: 10
+            average: 25
+            amplitude: 5
             phase: 0
         - function: "stochastic_noise"
           params:
@@ -31,13 +35,13 @@ model:
           params:
             temp_effect: 0.5
             rain_effect: 0.5
+            lag: 3
 
   regions:
     - name: "Test"
       region_id: 1
       rain_season: [[10, 23], [45, 52]]
       neighbour: [2]
-
 simulations:
   - simulation_name: "non_climate_dependent_atoregressive_disease"
     features:
@@ -47,16 +51,27 @@ simulations:
             params:
               phi: [0.5, 0.3]
               noise_std: 1
-
-  - simulation_name: "climate_dependent_and_autoregressive"
-    features:
-      - name: "sickness"
-        modification:
-          - function: "climate_dependent_disease_cases"
-            params:
-              temp_effect: 0.5
-              rain_effect: 0.2
-          - function: "autoregression"
-            params:
-              phi: [0.5, 0.3]
-              noise_std: 1
+#   - simulation_name: "climate_dependent_and_autoregressive"
+#     features:
+#       - name: "sickness"
+#         modification:
+#           - function: "climate_dependent_disease_cases"
+#             params:
+#               temp_effect: 0.5
+#               rain_effect: 0.2
+#           - function: "autoregression"
+#             params:
+#               phi: [0.5, 0.3]
+#               noise_std: 1
+# - simulation_name: "realistic_climate_season_dependent"
+#   features:
+#     - name: "rainfall"
+#       modification:
+#         - function: "realistic_data_generation"
+#           params:
+#             feature_name: "rainfall"
+#     - name: "temperature"
+#       modification:
+#         - function: "realistic_data_generation"
+#           params:
+#             feature_name: "mean_temperature"
