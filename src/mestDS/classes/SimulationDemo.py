@@ -1,6 +1,7 @@
 import copy
 import csv
 import datetime
+import inspect
 import os
 import sys
 import subprocess
@@ -12,7 +13,6 @@ import numpy as np
 from mestDS.classes import RainSeason
 from mestDS.default_variables import DATEFORMAT, TIMEDELTA
 from mestDS.utils.main import plot_data_with_sample_0, train_test_split_csv
-from scripts import simulation
 
 from .Feature import Feature
 from .Region import Region
@@ -56,9 +56,13 @@ class SimulationDemo:
                 self.data[region.name]["time_period"].append(current_date)
                 self.current_region = region
                 for feature in self.features:
-                    for mod in feature.modification:
+                    if "modification" in feature.__dict__:
 
-                        self.calculate_feature(feature.name, mod)
+                        for mod in feature.modification:
+                            self.calculate_feature(feature.name, mod)
+                    else:
+                        self.calculate_feature_function(feature)
+
         self.plot_data()
 
     def initialize_data(self):
@@ -73,6 +77,7 @@ class SimulationDemo:
 
             for feature in self.features:
                 self.data[region.name][feature.name] = base_func(t)
+                print(type(self.data[region.name][feature.name]))
 
     def calculate_feature(self, feature_name, mod: Feature):
 
@@ -87,10 +92,6 @@ class SimulationDemo:
         else:
             history = None
         if func == "realistic_data_generation":
-            # if (
-            #     isinstance(self.real_data, (list, np.ndarray))
-            #     and len(self.real_data) == 0
-            # ):
             if feature_name not in self.real_data:
                 self.real_data[feature_name] = (
                     self.data[self.current_region.name].get(feature_name, []).copy()
@@ -109,6 +110,37 @@ class SimulationDemo:
             self.data[self.current_region.name][feature_name][
                 self.current_i
             ] += modified_data
+
+    def calculate_feature_function(self, feature: Feature):
+        local_context = {}
+        exec(
+            feature.function,
+            {"np": np, "i": self.current_i, "region": self.current_region},
+            local_context,
+        )
+        func_name = list(local_context.keys())[0]
+        func = local_context[func_name]
+        signature = inspect.signature(func)
+        parameters_required = signature.parameters
+
+        args = [self.get_feature(param) for param in parameters_required]
+        result = func(*args)
+
+        feature_data = self.data[self.current_region.name][feature.name]
+
+        feature_data[self.current_i] = result
+
+        self.data[self.current_region.name][feature.name] = feature_data
+
+    def get_feature(self, param):
+        if param == "region":
+            return self.current_region
+        if param == "i":
+            return self.current_i
+        for feat in self.features:
+            if feat.name == param:
+                return self.data[self.current_region.name][param]
+        return None
 
     def plot_data(self):
         regions = self.data.keys()
