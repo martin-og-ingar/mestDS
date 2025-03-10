@@ -30,11 +30,9 @@ class Simulation:
     time_granularity: Literal["D", "W", "M"]
     simulation_length: int
     simulation_start_date: datetime.date
-    temperatures: list[float]
     regions: list[Region]
     data: Dict[str, Dict[str, list[float]]]
     features: list[Feature]
-    lists: list[List]
     current_i: int
     current_region: str
     simulation_name: str
@@ -143,9 +141,8 @@ class Simulations:
     simulations: list[Simulation]
     folder_path: str
 
-    def __init__(self, dsl_path, folder_path=""):
+    def __init__(self, dsl_path):
         self.simulations = parse_yaml(dsl_path)
-        self.folder_path = folder_path
 
     def simulate(self):
         for simulation in self.simulations:
