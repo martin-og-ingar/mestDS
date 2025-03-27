@@ -1,12 +1,22 @@
-__pycache__/
-**/.egg
-*.egg
-*.egg-info
-.venv/
-dist/
-runs/
-scripts/runs/
-/scripts/testing.py
-discord.deb
-datasets/
-*.zip
+
+#ignore everything
+*
+__pycache__
+#... except:
+!README.md
+!/pyproject.toml
+!LICENSE
+!.gitignore
+!src/
+!src/*
+!src/**
+!requirements.txt
+!tutorials/
+!tutorials/**
+!models/
+!models/**
+!scripts/
+!scripts/**
+
+# Exclude all __pycache__ directories
+**/__pycache__/

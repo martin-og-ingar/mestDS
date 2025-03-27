@@ -3,23 +3,17 @@ import csv
 import datetime
 import inspect
 import os
-import random
 import subprocess
 from typing import Dict, Literal
-
-from sympy import sympify
 import yaml
 import numpy as np
-
-from mestDS.classes import RainSeason
-from mestDS.default_variables import DATEFORMAT, TIMEDELTA
-from mestDS.utils.main import plot_data_with_sample_0, train_test_split_csv
-from scripts import simulation
-
-from .Feature import Feature
-from .Region import Region
-from mestDS.classes.ClimateHealthData import Obs
 import matplotlib.pyplot as plt
+
+from .default_variables import DATEFORMAT, TIMEDELTA
+from .utils import generate_report, train_test_split_csv
+from .classes.Feature import Feature
+from .classes.Region import Region
+from .classes.RainSeason import RainSeason
 
 
 def softmax(x):
@@ -59,7 +53,6 @@ class Simulation:
                 self.current_region = region
                 for feature in self.features:
                     self.calculate_feature(feature)
-        self.plot_data()
 
     def adjust_beta(self):
         beta_values = [feature.beta for feature in self.features]
@@ -119,6 +112,7 @@ class Simulation:
                 for var in variables:
                     plt.plot(self.data[region][var], label=f"{region} - {var}")
 
+                plt.title(self.simulation_name)
                 plt.xlabel("Time")
                 plt.ylabel("Values")
                 plt.legend()
@@ -127,13 +121,15 @@ class Simulation:
 
     def convert_to_csv(self, file_path):
         csv_rows = []
-        columns = [feature.name for feature in self.features]
+        columns = ["time_period"]
+        columns += [feature.name for feature in self.features]
         columns.append("location")
         csv_rows.append(columns)
 
         for region in self.regions:
             for i in range(len(self.data[region.name][self.features[0].name])):
                 row = []
+                row.append(self.data[region.name]["time_period"][i])
                 for feature in self.features:
                     row.append(self.data[region.name][feature.name][i])
                 row.append(region.name)
@@ -165,18 +161,19 @@ class Simulations:
             file_path = f"{folder_path}{simulation.simulation_name}/dataset.csv"
             simulation.convert_to_csv(file_path)
 
-    def csv_train_test_split(self):
+    def csv_train_test_split(self, exclude_features):
         for i, simulation in enumerate(self.simulations):
             train_test_split_csv(
                 f"{self.folder_path}{simulation.simulation_name or i}/dataset.csv",
                 f"{self.folder_path}{simulation.simulation_name or i}/",
+                exclude_feature=exclude_features,
             )
 
-    def eval_chap_model(self, model_name):
+    def eval_chap_model(self, model_name, exclude_features=[]):
         """
         This function
         """
-        self.csv_train_test_split()
+        self.csv_train_test_split(exclude_features)
 
         for simulation in self.simulations:
             train_command = [
@@ -191,18 +188,24 @@ class Simulations:
                 "python",
                 f"{model_name}/predict.py",
                 f"{self.folder_path}{simulation.simulation_name}/model.bin",
-                "",
+                f"{self.folder_path}{simulation.simulation_name}/dataset_train.csv",
                 f"{self.folder_path}{simulation.simulation_name}/dataset_x_test.csv",
                 f"{self.folder_path}{simulation.simulation_name}/predictions.csv",
             ]
 
             subprocess.run(test_command, check=True)
-            plot_data_with_sample_0(
+            generate_report(
                 f"{self.folder_path}{simulation.simulation_name}/dataset_y_test.csv",
                 f"{self.folder_path}{simulation.simulation_name}/predictions.csv",
                 f"{self.folder_path}{simulation.simulation_name}",
                 True,
+                model_name=model_name,
+                simulation_name=simulation.simulation_name,
             )
+
+    def plot_data(self):
+        for sim in self.simulations:
+            sim.plot_data()
 
 
 def parse_yaml(yaml_path):
@@ -241,7 +244,6 @@ def parse_yaml(yaml_path):
         for key, value in simulation.items():
             if key == "features":
                 for feat in value:
-                    print(type(sim.features[0]))
                     feat_name = feat.get("name")
                     if feat_name is None:
                         raise ValueError
