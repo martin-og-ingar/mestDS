@@ -1,77 +1,75 @@
 model:
   simulation_name: "climate_dependent_non_autoregressive"
-  time_granularity: "D"
-  simulation_length: 50
-  baseline_func: "constant"
+  time_granularity: "M"
+  simulation_length: 100
   features:
     - name: "rainfall"
       modification:
-        - function: "normal_distribution"
+        - function: "spike"
           params:
-            mean: 2
-            std_dev: 1
-        - function: "stochastic_noise"
-          params:
-            mean: 1
-            std_dev: 2
-        - function: "extreme_event"
-          params:
-            probability: 0.1
-            magnitude: 50
-    - name: "temperature"
-      modification:
+            magnitude: 5
         - function: "seasonal"
           params:
             average: 25
             amplitude: 5
             phase: 0
-        - function: "stochastic_noise"
+            noise: 0.5
+    # - name: "test"
+    #   function: |
+    #     def get_rainfall(region, i):
+    #       i = (i - 1) % 52 + 1
+    #       rain_season = False
+    #       for season in region.rain_season:
+    #         if season.start <= i <= season.end:
+    #           rain_season = True
+    #       if rain_season:
+    #           return np.random.gamma(shape=6, scale=1.0) * 4
+    #       else:
+    #           return np.random.gamma(shape=2, scale=0.5) * 2
+    - name: "temperature"
+      modification:
+        - function: "spike"
           params:
-            mean: 1
-            std_dev: 1
+            magnitude: 5
     - name: "sickness"
       modification:
+        - function: "seasonal_disease_cases"
+          params:
+            average: 35
+            amplitude: 30
+            phase: 0
         - function: "climate_dependent_disease_cases"
           params:
-            temp_effect: 0.5
-            rain_effect: 0.5
-            lag: 3
-
+            auto_regressive: False
+            lags: [3, 3]
+            phi: [0.6, 0.4]
   regions:
     - name: "Test"
       region_id: 1
       rain_season: [[10, 23], [45, 52]]
       neighbour: [2]
+      population: 200
 simulations:
-  - simulation_name: "non_climate_dependent_atoregressive_disease"
+  - simulation_name: "climate_dependent_atoregressive"
     features:
       - name: "sickness"
         modification:
-          - function: "autoregression"
+          - function: "climate_dependent_disease_cases"
             params:
-              phi: [0.5, 0.3]
-              noise_std: 1
-#   - simulation_name: "climate_dependent_and_autoregressive"
-#     features:
-#       - name: "sickness"
-#         modification:
-#           - function: "climate_dependent_disease_cases"
-#             params:
-#               temp_effect: 0.5
-#               rain_effect: 0.2
-#           - function: "autoregression"
-#             params:
-#               phi: [0.5, 0.3]
-#               noise_std: 1
-# - simulation_name: "realistic_climate_season_dependent"
-#   features:
-#     - name: "rainfall"
-#       modification:
-#         - function: "realistic_data_generation"
-#           params:
-#             feature_name: "rainfall"
-#     - name: "temperature"
-#       modification:
-#         - function: "realistic_data_generation"
-#           params:
-#             feature_name: "mean_temperature"
+              auto_regressive: True
+              lags: [3, 3]
+              phi: [0.6, 0.4]
+  - simulation_name: "realistic_climate_dependent"
+    features:
+      - name: "rainfall"
+        modification:
+          - function: "realistic_data_generation"
+            params:
+              feature_name: "rainfall"
+              country: "Argentina"
+      - name: "temperature"
+        modification:
+          - function: "realistic_data_generation"
+            params:
+              feature_name: "mean_temperature"
+              country: "Argentina"

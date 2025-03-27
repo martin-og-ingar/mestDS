@@ -1,8 +1,22 @@
 # Tutorial for new simulation
 
-This tutorial walks you through the step for setting up simulations using the new implementation which is based on version 3. The intention of this version is to generalize the composition of our DSL in order to provide a more flexible framework.
+This tutorial walks you through the step for installation and setting up simulations using the new implementation which is based on version 3. The intention of this version is to generalize the composition of our DSL in order to provide a more flexible framework.
 
-## 1. Define the simulation using DSL.
+## 1. Installation.
+
+Start by cloning the mestDS github repo
+
+```bash
+git clone https://github.com/martin-og-ingar/mestDS.git
+```
+
+Navigate to the root folder and install necessary packages used requirements.txt
+
+```bash
+pip install -r requirements.txt
+```
+
+## 2. Define the simulation using DSL.
 
 The example below displays how you can define a simulation. The DSL assigned variables from the **Simulation** class. If a value is not specified the in the DSL, it will use default values.
 
@@ -48,6 +62,40 @@ model:
       region_id: 1
       rain_season: [[10, 23], [35, 40]]
       neighbour: [2]
+```
+
+## Realistic data
+
+The current version provides support for retrieving real world data. This is gatherer from the chap-core and you can choose between 16 different countries
+
+- Argetina
+- Brazil
+- Cambodia
+- Colombia
+- Ecuador
+- El Salvador
+- Indonesia
+- Laos
+- Malaysia
+- Mexico
+- Nicaragua
+- Panama
+- Paraguay
+- Peru
+- Thailand
+- Vietnam
+
+The realistic datasets can be used like this
+
+```yaml
+model:
+  features:
+    - name: "temperature"
+      modification:
+        - function: "realistic_data_generation"
+          params:
+            feature_name: "mean_temperature"
+            country: "<one_of_the_countries_listed_above>"
 ```
 
 ## Function pool
