@@ -6,7 +6,7 @@ import numpy as np
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(root_dir)
 
-from mestDS.classes.SimulationDemo import SimulationsDemo
+from mestDS.SimulationDemo import SimulationsDemo
 
 ch_sim = SimulationsDemo("scripts/simulation6.yaml")
 ch_sim.simulate()

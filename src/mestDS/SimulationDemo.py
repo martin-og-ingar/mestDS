@@ -14,8 +14,8 @@ from mestDS.classes import RainSeason
 from mestDS.default_variables import DATEFORMAT, TIMEDELTA
 from mestDS.utils.main import plot_data_with_sample_0, train_test_split_csv
 
-from .Feature import Feature
-from .Region import Region
+from .classes.Feature import Feature
+from .classes.Region import Region
 from mestDS.classes.ClimateHealthData import Obs
 import matplotlib.pyplot as plt
 from mestDS.FunctionPool import *

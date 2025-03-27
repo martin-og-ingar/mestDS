@@ -161,14 +161,24 @@ simulations:
 
 ## 2. Initialize SimulationDemo
 
-Pass the path of the DSL file when you initialize the **Simulations** class and run **simulate()** to simulate the data.
+Pass the path of the DSL file when you initialize the **Simulations** class and run **simulate()** to simulate the data and display plot
 
 ```python
 from mestDS.classes.Simulation import Simulations
 
-ch_sim = Simulations("your yaml file here")
+ch_sim = Simulations("path/to/yaml")
 ch_sim.simulate()
 
+```
+
+## 4. Retreive model for testing.
+
+For demonstration purposes we provide an illustration using the **minimalistic_multiregion** model provided by the chap team.
+
+In your root folder
+
+```bash
+git clone "github"
 ```
 
 ## 3. Test a chap model
