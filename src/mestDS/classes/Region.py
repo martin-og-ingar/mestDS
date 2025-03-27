@@ -7,6 +7,7 @@ class Region:
     region_id: int
     rain_season: list[RainSeason]
     neighbour: list[int]
+    population: int
 
     def __init__(self, name="", region_id=0, rain_season=[], neighbour=[]):
         self.name = name

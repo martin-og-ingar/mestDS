@@ -34,7 +34,6 @@ class SimulationDemo:
     regions: list[Region]
     data: Dict[str, Dict[str, list[float]]]
     features: list[Feature]
-    baseline_func: str
     lists: list[List]
     current_i: int
     current_region: str
@@ -59,17 +58,19 @@ class SimulationDemo:
                     if "modification" in feature.__dict__:
 
                         for mod in feature.modification:
-                            self.calculate_feature(feature.name, mod)
+                            if feature.name != "sickness":
+                                self.calculate_feature(feature.name, mod)
                     else:
                         self.calculate_feature_function(feature)
 
+        self.calculate_disease_cases("sickness", self.features)
         self.plot_data()
 
     def initialize_data(self):
         self.data = {region.name: {} for region in self.regions}
         t = np.arange(self.simulation_length)
 
-        base_func = FUNCTION_POOL.get(self.baseline_func, lambda t: np.ones_like(t) * 1)
+        base_func = FUNCTION_POOL.get("constant", lambda t: np.ones_like(t) * 1)
         for region in self.regions:
             self.data[region.name]["time_period"] = [
                 datetime.datetime.strftime(self.simulation_start_date, DATEFORMAT)
@@ -77,7 +78,6 @@ class SimulationDemo:
 
             for feature in self.features:
                 self.data[region.name][feature.name] = base_func(t)
-                print(type(self.data[region.name][feature.name]))
 
     def calculate_feature(self, feature_name, mod: Feature):
 
@@ -86,30 +86,96 @@ class SimulationDemo:
         params = mod.get("params", {})
         params["t"] = self.simulation_length
         params["current_i"] = self.current_i
-        if func == "autoregression":
-            history = self.data[self.current_region.name][feature_name]
-            params["history"] = history
-        else:
-            history = None
         if func == "realistic_data_generation":
             if feature_name not in self.real_data:
                 self.real_data[feature_name] = (
                     self.data[self.current_region.name].get(feature_name, []).copy()
                 )
                 self.data[self.current_region.name][feature_name] = mod_func(**params)
+
         else:
-            if func == "climate_dependent_disease_cases":
-                params["rainfall"] = self.data[self.current_region.name]["rainfall"]
-                params["temperature"] = self.data[self.current_region.name][
-                    "temperature"
-                ]
             modified_data = mod_func(
                 **params,
             )
-
             self.data[self.current_region.name][feature_name][
                 self.current_i
             ] += modified_data
+
+    def calculate_disease_cases(self, feature_name, mod: Feature):
+        applied_modifications = []
+        weights = []
+        tot_weight = 0
+
+        for feat in mod:
+            if feat.name == "sickness":
+                for mod in feat.modification:
+
+                    func = mod["function"]
+                    mod_func = FUNCTION_POOL.get(func)
+                    params = mod["params"]
+                    params["t"] = self.simulation_length
+                    params["current_i"] = self.current_i
+
+                    if func == "seasonal":
+                        modified_data = mod_func(**params)
+                        self.data[self.current_region.name][
+                            feature_name
+                        ] += modified_data
+
+                    if func == "climate_dependent_disease_cases":
+                        params["population"] = self.population
+                        features = self.get_all_features()
+                        params["features"] = features
+
+                        modified_data = mod_func(**params)
+                        self.data[self.current_region.name][
+                            feature_name
+                        ] += modified_data
+
+                    if func == "autoregression":
+                        history = self.data[self.current_region.name][feature_name]
+                        params["history"] = history
+                        params["population"] = self.population
+
+                        modified_data = mod_func(**params)
+                        self.data[self.current_region.name][
+                            feature_name
+                        ] = modified_data
+                    else:
+                        history = None
+
+                    # weight = 0.5
+                    # tot_weight += weight
+
+                    # modified_data = mod_func(**params)
+                    # modified_data = np.array(modified_data)
+                    # applied_modifications.append(modified_data)
+                    # weights.append(weight)
+        # normalized_weights = [w / tot_weight for w in weights]
+        # weighted_mods = np.zeros_like(
+        #     applied_modifications[0], dtype=np.float64
+        # )
+        # for i in range(len(applied_modifications)):
+        #     weighted_mods += applied_modifications[i] * normalized_weights[i]
+
+        decay_factor = 0
+
+        # self.data[self.current_region.name][feature_name] = (
+        #     self.data[self.current_region.name][feature_name]
+        #     + (1 - decay_factor) * weighted_mods
+        # )
+
+    def get_all_features(self, exclude_features=None):
+
+        exclude_features = exclude_features or ["time_period", "sickness"]
+
+        filtered_features = {
+            key: value
+            for key, value in self.data[self.current_region.name].items()
+            if key not in exclude_features
+        }
+
+        return filtered_features
 
     def calculate_feature_function(self, feature: Feature):
         local_context = {}
