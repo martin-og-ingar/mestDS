@@ -26,22 +26,6 @@ def exponential_growth(rate, t):
     return np.exp(rate * t)
 
 
-def lognormal(mean, std_dev):
-    return np.random.lognormal(mean, std_dev)
-
-
-def complex_seasonal(average, amplitude1, amplitude2, phase1, phase2, t, current_i):
-    sine_wave1 = amplitude1 * np.sin(2 * np.pi * current_i / 365 + phase1)
-    sine_wave2 = amplitude2 * np.sin(2 * np.pi * current_i / 365 + phase2)
-    return average + sine_wave1 + sine_wave2
-
-
-def picewivse_trend(rate1, rate2, switch, t, current_i):
-    return np.where(
-        current_i < switch, rate1 * t, rate2 * (t - switch) + rate1 * switch
-    )
-
-
 def extreme_event(probability, magnitude, t=None, current_i=None):
     return magnitude if np.random.rand() < probability else 0
 
@@ -168,9 +152,6 @@ FUNCTION_POOL = {
     "normal_distribution": normal_distribution,
     "poisson_distribution": poisson_distribution,
     "exponential_growth": exponential_growth,
-    "lognormal": lognormal,
-    "complex_seasonal": complex_seasonal,
-    "picewise_trend": picewivse_trend,
     "extreme_event": extreme_event,
     "autoregression": autoregression,
     "realistic_data_generation": realistic_data_generation,

@@ -14,18 +14,6 @@ model:
             amplitude: 5
             phase: 0
             noise: 0.5
-    # - name: "test"
-    #   function: |
-    #     def get_rainfall(region, i):
-    #       i = (i - 1) % 52 + 1
-    #       rain_season = False
-    #       for season in region.rain_season:
-    #         if season.start <= i <= season.end:
-    #           rain_season = True
-    #       if rain_season:
-    #           return np.random.gamma(shape=6, scale=1.0) * 4
-    #       else:
-    #           return np.random.gamma(shape=2, scale=0.5) * 2
     - name: "temperature"
       modification:
         - function: "spike"

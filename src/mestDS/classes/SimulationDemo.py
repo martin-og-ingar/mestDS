@@ -144,27 +144,6 @@ class SimulationDemo:
                     else:
                         history = None
 
-                    # weight = 0.5
-                    # tot_weight += weight
-
-                    # modified_data = mod_func(**params)
-                    # modified_data = np.array(modified_data)
-                    # applied_modifications.append(modified_data)
-                    # weights.append(weight)
-        # normalized_weights = [w / tot_weight for w in weights]
-        # weighted_mods = np.zeros_like(
-        #     applied_modifications[0], dtype=np.float64
-        # )
-        # for i in range(len(applied_modifications)):
-        #     weighted_mods += applied_modifications[i] * normalized_weights[i]
-
-        decay_factor = 0
-
-        # self.data[self.current_region.name][feature_name] = (
-        #     self.data[self.current_region.name][feature_name]
-        #     + (1 - decay_factor) * weighted_mods
-        # )
-
     def get_all_features(self, exclude_features=None):
 
         exclude_features = exclude_features or ["time_period", "sickness"]
