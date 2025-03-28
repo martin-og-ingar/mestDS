@@ -1,6 +1,8 @@
 from .classes.RainSeason import RainSeason
 from .classes.Region import Region
-import datetime
+from datetime import timedelta
+from dateutil.relativedelta import relativedelta
+
 
 DEFAULT_TEMPERATURES = [
     23.72,
@@ -17,13 +19,15 @@ DEFAULT_TEMPERATURES = [
     23.03,
 ]
 TIMEDELTA = {
-    "D": datetime.timedelta(days=1),
-    "W": datetime.timedelta(weeks=1),
-    "M": datetime.timedelta(weeks=4),
+    "D": timedelta(days=1),
+    "W": timedelta(weeks=1),
+    "M": relativedelta(months=1),
 }
-DATEFORMAT = "%Y-%m-%d"
+DATEFORMAT = {"D": "%Y-%m-%d", "W": "%G-W%V", "M": "%Y-%m"}
 DEFAULT_RAIN_SEASON = [RainSeason(start=12, end=23), RainSeason(start=36, end=40)]
 DEFAULT_REGIONS = [
     Region("Masadi", 1, DEFAULT_RAIN_SEASON, [2]),
     Region("Kasama", 2, DEFAULT_RAIN_SEASON, [1]),
 ]
+
+DEFAULT_NUMBER_OF_FOLDS = 5
