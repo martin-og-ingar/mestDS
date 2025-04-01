@@ -11,12 +11,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from .default_variables import DATEFORMAT, TIMEDELTA
-from .utils import train_test_split_csv
+from .utils import generate_report, train_test_split_csv
 from .classes.RainSeason import RainSeason
 from .classes.Feature import Feature
 from .classes.Region import Region
 
-from mestDS.FunctionPool import *
+from .FunctionPool import *
 
 
 class List:
@@ -53,15 +53,17 @@ class SimulationDemo:
                 self.data[region.name]["time_period"].append(current_date)
                 self.current_region = region
                 for feature in self.features:
-                    if "modification" in feature.__dict__:
-
+                    if (
+                        "modification" in feature.__dict__
+                        and len(feature.modification) > 0
+                    ):
                         for mod in feature.modification:
-                            if feature.name != "sickness":
+                            if feature.name != "disease_cases":
                                 self.calculate_feature(feature.name, mod)
                     else:
                         self.calculate_feature_function(feature)
 
-        self.calculate_disease_cases("sickness", self.features)
+        self.calculate_disease_cases("disease_cases", self.features)
         self.plot_data()
 
     def initialize_data(self):
@@ -105,7 +107,7 @@ class SimulationDemo:
         tot_weight = 0
 
         for feat in mod:
-            if feat.name == "sickness":
+            if feat.name == "disease_cases":
                 for mod in feat.modification:
 
                     func = mod["function"]
@@ -144,7 +146,7 @@ class SimulationDemo:
 
     def get_all_features(self, exclude_features=None):
 
-        exclude_features = exclude_features or ["time_period", "sickness"]
+        exclude_features = exclude_features or ["time_period", "disease_cases"]
 
         filtered_features = {
             key: value
@@ -193,18 +195,18 @@ class SimulationDemo:
             if feature.name != "lagged_sickness"
         ]
         for region in regions:
-            if region == "Test":
-                plt.figure(figsize=(10, 6))
 
-                for var in variables:
-                    plt.plot(self.data[region][var], label=f"{region} - {var}")
+            plt.figure(figsize=(10, 6))
 
-                plt.xlabel("Time")
-                plt.ylabel("Values")
-                plt.title(self.simulation_name)
-                plt.legend()
-                plt.tight_layout()
-                plt.show()
+            for var in variables:
+                plt.plot(self.data[region][var], label=f"{region} - {var}")
+
+            plt.xlabel("Time")
+            plt.ylabel("Values")
+            plt.title(self.simulation_name)
+            plt.legend()
+            plt.tight_layout()
+            plt.show()
 
     def convert_to_csv(self, file_path):
         csv_rows = []
@@ -241,49 +243,52 @@ class SimulationsDemo:
         self.folder_path = folder_path
         for i, simulation in enumerate(self.simulations):
             os.makedirs(
-                os.path.dirname(f"{folder_path}{simulation.simulation_name}/"),
+                os.path.dirname(f"{folder_path}/{simulation.simulation_name}/"),
                 exist_ok=True,
             )
-            file_path = f"{folder_path}{simulation.simulation_name}/dataset.csv"
+            file_path = f"{folder_path}/{simulation.simulation_name}/dataset.csv"
             simulation.convert_to_csv(file_path)
 
-    def csv_train_test_split(self):
+    def csv_train_test_split(self, exclude_features):
         for i, simulation in enumerate(self.simulations):
             train_test_split_csv(
-                f"{self.folder_path}{simulation.simulation_name or i}/dataset.csv",
-                f"{self.folder_path}{simulation.simulation_name or i}/",
+                f"{self.folder_path}/{simulation.simulation_name or i}/dataset.csv",
+                f"{self.folder_path}/{simulation.simulation_name or i}/",
+                exclude_feature=exclude_features,
             )
 
-    def eval_chap_model(self, model_name):
+    def eval_chap_model(self, model_name, exclude_features=[]):
         """
         This function
         """
-        self.csv_train_test_split()
+        self.csv_train_test_split(exclude_features)
 
         for simulation in self.simulations:
             train_command = [
                 sys.executable,
                 f"{model_name}/train.py",
-                f"{self.folder_path}{simulation.simulation_name}/dataset_train.csv",
-                f"{self.folder_path}{simulation.simulation_name}/model.bin",
+                f"{self.folder_path}/{simulation.simulation_name}/dataset_train.csv",
+                f"{self.folder_path}/{simulation.simulation_name}/model.bin",
             ]
             subprocess.run(train_command, check=True)
 
             test_command = [
                 sys.executable,
                 f"{model_name}/predict.py",
-                f"{self.folder_path}{simulation.simulation_name}/model.bin",
+                f"{self.folder_path}/{simulation.simulation_name}/model.bin",
                 "",
-                f"{self.folder_path}{simulation.simulation_name}/dataset_x_test.csv",
-                f"{self.folder_path}{simulation.simulation_name}/predictions.csv",
+                f"{self.folder_path}/{simulation.simulation_name}/dataset_x_test.csv",
+                f"{self.folder_path}/{simulation.simulation_name}/predictions.csv",
             ]
 
             subprocess.run(test_command, check=True)
-            plot_data_with_sample_0(
-                f"{self.folder_path}{simulation.simulation_name}/dataset_y_test.csv",
-                f"{self.folder_path}{simulation.simulation_name}/predictions.csv",
-                f"{self.folder_path}{simulation.simulation_name}",
+            generate_report(
+                f"{self.folder_path}/{simulation.simulation_name}/dataset_y_test.csv",
+                f"{self.folder_path}/{simulation.simulation_name}/predictions.csv",
+                f"{self.folder_path}/{simulation.simulation_name}",
                 True,
+                model_name=model_name,
+                simulation_name=simulation.simulation_name,
             )
 
 
@@ -353,6 +358,10 @@ def parse_yaml(yaml_path):
                             base_feature_copy.modification = new_modification
                         else:
                             base_feature_copy.modification = base_feature.modification
+
+                        if "function" in feat:
+                            base_feature_copy.function = feat["function"]
+                            base_feature_copy.modification = []
 
                         sim.features = [
                             f if f.name != feat_name else base_feature_copy

@@ -32,27 +32,28 @@ def extreme_event(probability, magnitude, t=None, current_i=None):
 
 def seasonal(average, amplitude, phase, noise, current_i, t=None):
     n = np.random.normal(0, noise)
-    sine_wave = average + amplitude * np.sin(2 * np.pi * current_i / 12 + phase) + n
+    shift = phase * np.pi
+    sine_wave = average + amplitude * np.sin(2 * np.pi * current_i / 12 + shift) + n
     return sine_wave
 
 
-def seasonal_disease_cases(average, amplitude, phase, current_i, t):
-
+def seasonal_disease_cases(average, amplitude, phase, noise, current_i, t):
+    shift = phase * np.pi
     disease_cases = []
 
     for current_i in range(t):
         noise = np.random.normal(0, 0.5)
 
         sine_wave = np.int32(
-            average + amplitude * np.sin(2 * np.pi * current_i / 12 + phase) + noise
+            average + amplitude * np.sin(2 * np.pi * current_i / 12 + shift) + noise
         )
         disease_cases.append(sine_wave)
     return disease_cases
 
 
-def spike(magnitude, t, current_i):
-
-    return magnitude if current_i == t // 2 else 0
+def spike(magnitude, t, current_i, spike_position=0.5):
+    spike_index = int(spike_position * t)
+    return magnitude if current_i == spike_index else 0
 
 
 def trend(rate, t):
