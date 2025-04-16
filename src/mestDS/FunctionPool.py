@@ -2,7 +2,7 @@ import numpy as np
 from chap_core.data.datasets import ISIMIP_dengue_harmonized
 
 
-def constant(t, value=0):
+def constant(t, value=1, current_i=None):
     return np.full_like(t, value, dtype=float)
 
 
@@ -20,6 +20,25 @@ def poisson_distribution(lam, scale, t=None, current_i=None):
     events = np.random.poisson(lam)
     rainfall = events * np.random.exponential(scale)
     return rainfall
+
+
+def correlation(
+    correlation_feature_array,
+    correlation_feature,
+    correlation,
+    lag,
+    current_i,
+    t=None,
+):
+    if len(correlation_feature_array) < lag + 1:
+        raise ValueError(
+            f"{correlation_feature_array.name} length is less than {lag + 1}"
+        )
+
+    lagged_feature = correlation_feature_array[(current_i - lag)]
+
+    value = correlation * lagged_feature
+    return value
 
 
 def exponential_growth(rate, t):
@@ -149,6 +168,7 @@ FUNCTION_POOL = {
     "seasonal_disease_cases": seasonal_disease_cases,
     "trend": trend,
     "spike": spike,
+    "correlation": correlation,
     "stochastic_noise": stochastic_noise,
     "normal_distribution": normal_distribution,
     "poisson_distribution": poisson_distribution,

@@ -86,6 +86,15 @@ class SimulationDemo:
         params = mod.get("params", {})
         params["t"] = self.simulation_length
         params["current_i"] = self.current_i
+        corr_name = params.get("correlation_feature")
+
+        if func == "correlation":
+            corr_array = self.data[self.current_region.name][corr_name]
+            params["correlation_feature_array"] = corr_array
+            modified_data = mod_func(**params)
+            self.data[self.current_region.name][feature_name][
+                self.current_i
+            ] += modified_data
         if func == "realistic_data_generation":
             if feature_name not in self.real_data:
                 self.real_data[feature_name] = (
