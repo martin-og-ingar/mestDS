@@ -22,6 +22,21 @@ def poisson_distribution(lam, scale, t=None, current_i=None):
     return rainfall
 
 
+def rain_season(peak_weeks, width, amplitude, shape, t, current_i):
+    week = current_i % 52
+    value = 0
+
+    for peak in peak_weeks:
+        if shape == "gaussian":
+            value += amplitude * np.exp(-((week - peak) ** 2) / (2 * width**2))
+        elif shape == "sine":
+            dist = abs(week - peak)
+            if dist < width:
+                value += amplitude * np.sin(np.pi * dist / width)
+
+    return value
+
+
 def correlation(
     correlation_feature_array,
     correlation_feature,
@@ -168,6 +183,7 @@ FUNCTION_POOL = {
     "seasonal_disease_cases": seasonal_disease_cases,
     "trend": trend,
     "spike": spike,
+    "rain_season": rain_season,
     "correlation": correlation,
     "stochastic_noise": stochastic_noise,
     "normal_distribution": normal_distribution,

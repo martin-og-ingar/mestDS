@@ -117,6 +117,15 @@ Functions in the pool with respective parameters:
 - realistic_data_generation
   - feature_name - String
   - country - String
+- correlation
+  - correlation_feature - String (The feature that you want influence from)
+  - correlation - float (Number between 0-1, tell how much you want from the feature)
+  - lag - int - delayed effect.
+- rain_season
+  - peak_weeks - int
+  - width - int (how wide the rain season is)
+  - amplitude - int (max rainfall)
+  - shape - String (gaussian/sinusodial)
 
 ### Realistic data
 
