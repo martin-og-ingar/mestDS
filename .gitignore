@@ -13,6 +13,8 @@ __pycache__
 !requirements.txt
 !tutorials/
 !tutorials/**
+!example_run/
+!example_run/**
 
 # Exclude all __pycache__ directories
 **/__pycache__/

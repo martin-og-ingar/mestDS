@@ -1,0 +1,66 @@
+# This is an example YAML configuration.
+
+# The simulation creates two features: rainfall and mean_temperature.
+# Rainfall uses the function pool to generate values while mean_temperature showcase how to
+# take advantage of the function approach where you can define your own function.
+# The simulation calculates disease cases based on the defined climate features and apply autoregression
+# in the calculation. It also apply a lagged effect of 3 (weeks or months based on time granularity) which
+# cause a dealy in the effect of climate features. It simulates one regions with a population of 100, and one rain-season between
+# week/month 20 and 28.
+
+# The simulation also creates multiple simulation instances.
+# In this example it uses the function pool to generate realistic data for rainfall and mean_temperature.
+# from Argentina. The features that's not modified under the simulations flag is used for the
+# second simulation as well. Meaning that the realistic data simulation uses
+# climate dependent disease calculation with autoregression and lagged effects of 3 weeks/months.
+
+model:
+  simulation_name: "climate_dependent_non_autoregressive"
+  time_granularity: "D"
+  simulation_length: 100
+  features:
+    - name: "rainfall"
+      modification:
+        - function: "poisson_distribution"
+          params:
+            lam: 2
+            scale: 1
+        - function: "spike"
+          params:
+            magnitude: 10
+            spike_position: 0.5
+    - name: "mean_temperature"
+      function: |
+        def get_mean_temperature(i):
+          temp = 24 + 5 * np.sin(2 * np.pi * i / 52)
+          noise = np.random.normal(0,2)
+          return temp + noise
+    - name: "sickness"
+      modifications:
+        function: "climate_dependent_disease_cases"
+        params:
+          lags: [3, 3]
+          auto_regressive: True
+          phi: [0.6, 0.4]
+  regions:
+    - name: "Region"
+      region_id: 1
+      rain_season: [[20, 28]]
+      neighbour: [2]
+      population: 100
+
+simulations:
+  - simulation_name: "realistic_climate_autoregression"
+    features:
+      - name: "rainfall"
+        modification:
+          - function: "realistic_data_generation"
+            params:
+              feature_name: "rainfall"
+              country: "Argentina"
+      - name: "mean_temperature"
+        modification:
+          - function: "realistic_data_generation"
+            params:
+              feature_name: "mean_temperature"
+              country: "Argentina"

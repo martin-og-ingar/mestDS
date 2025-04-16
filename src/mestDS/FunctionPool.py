@@ -124,9 +124,9 @@ def climate_dependent_disease_cases(
     population,
     features,
     auto_regressive,
-    phi,
     current_i,
     t,
+    phi=None,
 ):
     poisson_rate = np.zeros_like(next(iter(features.values())))
     for (feature_name, covariate), lag in zip(features.items(), lags):
@@ -153,7 +153,7 @@ def climate_dependent_disease_cases(
 
 def apply_sigmoid_capping(disease_cases, population):
     disease_cases = apply_sigmoid(disease_cases, population)
-    disease_cases = np.random.poisson(disease_cases)
+    # disease_cases = np.random.poisson(disease_cases)
     # disease_cases[disease_cases > population] = population
     return disease_cases
 
