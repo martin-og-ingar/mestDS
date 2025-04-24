@@ -22,19 +22,20 @@ def poisson_distribution(lam, scale, t=None, current_i=None):
     return rainfall
 
 
-def rain_season(peak_weeks, width, amplitude, shape, t, current_i):
-    week = current_i % 52
-    value = 0
+def rain_season(rain_period, intensity, current_i, t):
+    week = ((current_i - 1) % 52) + 1
 
-    for peak in peak_weeks:
-        if shape == "gaussian":
-            value += amplitude * np.exp(-((week - peak) ** 2) / (2 * width**2))
-        elif shape == "sine":
-            dist = abs(week - peak)
-            if dist < width:
-                value += amplitude * np.sin(np.pi * dist / width)
-
-    return value
+    for start, end in rain_period:
+        if start <= end:
+            if start <= week <= end:
+                print(current_i)
+                return intensity
+        else:
+            if week >= start or week <= end:
+                if week >= start:
+                    print(current_i)
+                    return intensity
+    return 1.0
 
 
 def correlation(

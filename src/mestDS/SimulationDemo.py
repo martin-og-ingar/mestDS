@@ -101,7 +101,13 @@ class SimulationDemo:
                     self.data[self.current_region.name].get(feature_name, []).copy()
                 )
                 self.data[self.current_region.name][feature_name] = mod_func(**params)
-
+        if func == "rain_season":
+            modified_data = mod_func(
+                **params,
+            )
+            self.data[self.current_region.name][feature_name][
+                self.current_i
+            ] *= modified_data
         else:
             modified_data = mod_func(
                 **params,
