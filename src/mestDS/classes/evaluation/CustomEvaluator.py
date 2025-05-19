@@ -36,11 +36,11 @@ def convert_args(args, simulation):
     for arg in args:
         match arg:
             case "train_set":
-                converted_args.append(simulation.test_set_x_path)
+                converted_args.append(simulation.train_set_x_path)
             case "train_set_x":
-                converted_args.append(simulation.test_set_x_path)
+                converted_args.append(simulation.train_set_x_path)
             case "train_set_y":
-                converted_args.append(simulation.test_set_y_path)
+                converted_args.append(simulation.train_set_y_path)
             case "test_set":
                 converted_args.append(simulation.test_set_x_path)
             case "test_set_x":

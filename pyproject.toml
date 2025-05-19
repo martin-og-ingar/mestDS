@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "numpy", "matplotlib"]
+requires = ["hatchling", "numpy", "matplotlib", "skforecast"]
 build-backend = "hatchling.build"
 [project]
 name = "mestDS"

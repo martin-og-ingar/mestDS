@@ -6,6 +6,7 @@ import yaml
 from mestDS.classes.Feature import Feature
 from mestDS.classes.RainSeason import RainSeason
 from mestDS.classes.Region import Region
+from mestDS.classes.evaluation.Evaluator import Evaluator
 from mestDS.classes.evaluation.EvaluatorGenerator import EvaluatorGenerator
 from mestDS.classes.Simulation import Simulation
 
@@ -80,20 +81,81 @@ class mestDS:
                 model_name=model_name,
             )
 
-    def plot_data(self):
+    def plot_data(self, dont_show=[]):
         for sim in self.simulations:
-            sim.plot_data()
+            sim.plot_data(dont_show)
 
     def evaluate(self):
         for evaluator in self.evaluators:
-            for simulation in self.simulations:
-                evaluator.evaluate(simulation)
+            evaluator_copy = copy.deepcopy(evaluator)
+            evaluator_copy.evaluate(self.simulations)
 
 
 def parse_yaml(yaml_path):
+    dsl = load_yaml(yaml_path)
+    dsl_simulations = dsl.get("simulations", {})
+    simulations = []
+    for simulation in dsl_simulations:
+        inherits = simulation.get("inherits")
+        if inherits:
+            sim_to_inherit = next(sim for sim in simulations if sim.id == inherits)
+            sim = copy.deepcopy(sim_to_inherit)
+        else:
+            sim = Simulation()
+
+        for key, value in simulation.items():
+            if key == "regions":
+                regions = []
+                for reg in value:
+                    region = Region()
+                    for key, value in reg.items():
+                        if key == "rain_season":
+                            rain_season = []
+                            for season in value:
+                                rain_season.append(RainSeason(season[0], season[1]))
+                            region.__setattr__(key, rain_season)
+                        else:
+                            region.__setattr__(key, value)
+                    regions.append(region)
+                sim.regions = regions
+            if key == "features":
+                for feat in value:
+                    feat_name = feat.get("name")
+                    index = next(
+                        (
+                            i
+                            for i, feature in enumerate(sim.features)
+                            if feat_name == feature.name
+                        ),
+                        None,
+                    )
+                    if index is not None:
+                        sim.features[index].function = feat.get("function", {})
+                    else:
+                        feature = Feature()
+                        for key, value in feat.items():
+                            feature.__setattr__(key, value)
+                        sim.features.append(feature)
+
+            elif key != "inherits":
+                sim.__setattr__(key, value)
+
+        simulations.append(sim)
+
+    dsl_evaluators = dsl.get("evaluators", {})
+    evaluators = []
+    for evaluator in dsl_evaluators:
+        # eval = EvaluatorGenerator(evaluator).create_evaluator()
+        eval = Evaluator(evaluator)
+        evaluators.append(eval)
+
+    return simulations, evaluators
+
+
+def parse_yaml_deprecated(yaml_path):
     parameters = load_yaml(yaml_path)
     sim_base = Simulation()
-    base = parameters.get("model", {})
+    base = parameters.get("simulations", {})
     for key, value in base.items():
         if key == "regions":
             regions = []
@@ -145,7 +207,8 @@ def parse_yaml(yaml_path):
     evaluators = parameters.get("evaluators", {})
     evals = []
     for evaluator in evaluators:
-        eval = EvaluatorGenerator(evaluator).create_evaluator()
+        # eval = EvaluatorGenerator(evaluator).create_evaluator()
+        eval = Evaluator(evaluator)
         evals.append(eval)
 
     return sims, evals

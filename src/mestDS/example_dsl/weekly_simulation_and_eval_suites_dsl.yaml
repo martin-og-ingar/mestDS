@@ -1,7 +1,7 @@
 model:
   simulation_name: "lagged_sickness_09"
-  time_granularity: "W"
-  simulation_length: 100
+  time_granularity: "M"
+  simulation_length: 50
   features:
     - name: "population"
       function: |
@@ -49,10 +49,43 @@ model:
       region_id: 3
       rain_season: []
       neighbour: [2]
+
+simulations:
+  - simulation_name: "lagged_sickness_05"
+    features:
+      - name: "disease_cases"
+        function: |
+          def get_disease_cases(mean_temperature, rainfall, lagged_sickness):
+            sickness = (mean_temperature[-1] * 0.5) + (rainfall[-1] * 0.5) + (lagged_sickness[-1] * 0.5)
+            return int(sickness + np.random.uniform(-2, 2))
+  - simulation_name: "lagged_sickness_02"
+    features:
+      - name: "disease_cases"
+        function: |
+          def get_disease_cases(mean_temperature, rainfall, lagged_sickness):
+            sickness = (mean_temperature[-1] * 0.5) + (rainfall[-1] * 0.5) + (lagged_sickness[-1] * 0.2)
+            return int(sickness + np.random.uniform(-2, 2))
+  - simulation_name: "lagged_sickness_00"
+    features:
+      - name: "disease_cases"
+        function: |
+          def get_disease_cases(mean_temperature, rainfall):
+            sickness = (mean_temperature[-1] * 0.5) + (rainfall[-1] * 0.5)
+            return int(sickness + np.random.uniform(-2, 2))
 evaluators:
   - evaluation_technique: "holdout"
-    test_size_percentage: 12
-    # model: "models/weekly_ar_model"
+    time_granularity: "W"
+    prediction_lengt: 12
     model: "https://github.com/sandvelab/chap_auto_ewars_weekly@737446a7accf61725d4fe0ffee009a682e7457f6"
-    # model: "https://github.com/sandvelab/chap_auto_ewars@58d56f86641f4c7b09bbb635afd61740deff0640"
-    # model: https://github.com/sandvelab/monthly_ar_model@cadd785872624b4bcd839a39f5e7020c25254c31
+  - evaluation_technique: "holdout"
+    time_granularity: "M"
+    prediction_lengt: 3
+    model: "https://github.com/sandvelab/chap_auto_ewars@58d56f86641f4c7b09bbb635afd61740deff0640"
+  - evaluation_technique: "holdout"
+    time_granularity: "W"
+    prediction_lengt: 12
+    model: "models/weekly_ar_model"
+  - evaluation_technique: "holdout"
+    time_granularity: "M"
+    prediction_lengt: 3
+    model: https://github.com/sandvelab/monthly_ar_model@cadd785872624b4bcd839a39f5e7020c25254c31

@@ -29,6 +29,7 @@ class List:
 
 
 class Simulation:
+    id: int
     time_granularity: Literal["D", "W", "M"]
     simulation_length: int
     simulation_start_date: datetime.date
@@ -44,10 +45,14 @@ class Simulation:
     test_set_x_path: str
     test_set_y_path: str
 
+    def __init__(self):
+        self.features = []
+        self.regions = []
+
     def simulate(self):
         self.simulation_start_date = datetime.date(2024, 1, 1)
+        self.place_target_last_in_list()
         self.initialize_data()
-        # For each day/week/month, simulate the features and calculate the sickness for each region.
         delta = TIMEDELTA[self.time_granularity]
         for i in range(1, self.simulation_length):
 
@@ -125,12 +130,16 @@ class Simulation:
             for feature in self.features:
                 self.data[region.name][feature.name] = [0]
 
-    def plot_data(self):
+    def place_target_last_in_list(self):
+        for f in self.features:
+            if getattr(f, "target", True):
+                self.features.remove(f)
+                self.features.append(f)
+
+    def plot_data(self, dont_show):
         regions = self.data.keys()
         variables = [
-            feature.name
-            for feature in self.features
-            if feature.name != "lagged_sickness" and feature.name != "white_noise"
+            feature.name for feature in self.features if feature.name not in dont_show
         ]
         for region in regions:
             plt.figure(figsize=(10, 6))
