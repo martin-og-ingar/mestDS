@@ -1,16 +1,13 @@
 import copy
 import os
-import subprocess
 import yaml
 
 from mestDS.classes.Feature import Variable
-from mestDS.classes.RainSeason import RainSeason
 from mestDS.classes.Region import Region
 from mestDS.classes.evaluation.Evaluator import Evaluator
-from mestDS.classes.evaluation.EvaluatorGenerator import EvaluatorGenerator
 from mestDS.classes.Simulation import Simulation
 
-from mestDS.utils import generate_report, slugify, train_test_split_csv
+from mestDS.utils import slugify
 
 
 class mestDS:

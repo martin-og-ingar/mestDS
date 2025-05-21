@@ -1,31 +1,21 @@
-import copy
 import csv
 import datetime
 from dateutil.relativedelta import relativedelta
 import inspect
 import os
-import subprocess
 from typing import Any, Dict, Literal
-import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 from ..default_variables import DATEFORMAT, TIMEDELTA
-from ..utils import generate_report, generate_report_v2, train_test_split_csv
 from .Feature import Variable
 from .Region import Region
-from .RainSeason import RainSeason
 
 
 def softmax(x):
 
     return np.exp(x) / np.sum(np.exp(x), axis=0)
-
-
-# class List:
-#     name: str
-#     data: list[float]
 
 
 class Simulation:

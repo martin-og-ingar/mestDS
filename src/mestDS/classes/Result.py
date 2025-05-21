@@ -7,6 +7,6 @@ from .LossMetrics import LossMetrics
 
 @dataclass
 class Result:
-    simulation_name: str
+    name: str
     plots: list[matplotlib.figure.Figure]
     metrics: list[LossMetrics]
