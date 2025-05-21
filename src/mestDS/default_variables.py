@@ -1,4 +1,3 @@
-from .classes.RainSeason import RainSeason
 from .classes.Region import Region
 from datetime import timedelta
 from dateutil.relativedelta import relativedelta
@@ -24,10 +23,9 @@ TIMEDELTA = {
     "M": relativedelta(months=1),
 }
 DATEFORMAT = {"D": "%Y-%m-%d", "W": "%G-W%V", "M": "%Y-%m"}
-DEFAULT_RAIN_SEASON = [RainSeason(start=12, end=23), RainSeason(start=36, end=40)]
 DEFAULT_REGIONS = [
-    Region("Masadi", 1, DEFAULT_RAIN_SEASON, [2]),
-    Region("Kasama", 2, DEFAULT_RAIN_SEASON, [1]),
+    Region("Masadi", 1, [2]),
+    Region("Kasama", 2, [1]),
 ]
 
 DEFAULT_NUMBER_OF_FOLDS = 5

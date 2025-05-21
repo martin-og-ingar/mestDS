@@ -1,5 +1,3 @@
-# from mestDS.default_variables import DEFAULT_RAIN_SEASON
-from .RainSeason import RainSeason
 from typing import Any
 
 

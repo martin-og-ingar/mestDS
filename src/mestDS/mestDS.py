@@ -4,7 +4,7 @@ import yaml
 
 from mestDS.classes.Feature import Variable
 from mestDS.classes.Region import Region
-from mestDS.classes.evaluation.Evaluator import Evaluator
+from mestDS.classes.Evaluator import Evaluator
 from mestDS.classes.Simulation import Simulation
 
 from mestDS.utils import slugify
