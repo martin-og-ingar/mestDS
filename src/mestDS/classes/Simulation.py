@@ -160,7 +160,7 @@ class Simulation:
                 plt.show()
             plt.close()
 
-    def convert_to_csv(self, file_path):
+    def to_csv(self, file_path):
 
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 

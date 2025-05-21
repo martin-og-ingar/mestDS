@@ -89,6 +89,7 @@ class PDF(FPDF):
         # Place plot image centered horizontally
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmpfile:
             figure.savefig(tmpfile.name, format="png", bbox_inches="tight")
+            figure.close()
             x_position_mm = (page_width_mm - image_width_mm) / 2 + self.l_margin
             self.image(tmpfile.name, x=x_position_mm, w=image_width_mm)
 

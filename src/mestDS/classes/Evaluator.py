@@ -34,10 +34,10 @@ class Evaluator:
         elif path:
             path_obj = Path(path)
             if path_obj.is_file() and path_obj.suffix == ".csv":
-                self.results.append(self.runner.run(path=path_obj))
+                self.results.append(self.runner.run(filename=path_obj))
             elif path_obj.is_dir():
-                for csv_file in path_obj.glob("*.csv"):
-                    self.results.append(self.runner.run(path=csv_file))
+                for filename in path_obj.glob("*.csv"):
+                    self.results.append(self.runner.run(filename=filename))
             else:
                 print(f"Path '{path}' is not a valid CSV file or directory.")
         self.generate_report()

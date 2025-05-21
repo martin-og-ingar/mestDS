@@ -17,22 +17,24 @@ class mestDS:
     is_converted_to_csvs: bool
     folder_path: str
 
-    def __init__(self, dsl_path):
-        self.simulators, self.evaluators = parse_yaml(dsl_path)
+    def __init__(self, dsl_path=None):
+        if dsl_path:
+            self.simulators, self.evaluators = parse_yaml(dsl_path)
 
     def simulate(self):
         for simulator in self.simulators:
             simulator.simulate()
+        return self.simulators
 
-    def convert_to_csvs(self, folder_path):
-        self.folder_path = folder_path
+    def to_csvs(self, folder):
+        self.folder_path = folder
+        os.makedirs(
+            os.path.dirname(f"{folder}"),
+            exist_ok=True,
+        )
         for simulator in self.simulators:
-            os.makedirs(
-                os.path.dirname(f"{folder_path}{simulator.name}/"),
-                exist_ok=True,
-            )
-            file_path = f"{folder_path}{simulator.name}/dataset.csv"
-            simulator.convert_to_csv(file_path)
+            file_path = f"{folder}{slugify(simulator.name)}.csv"
+            simulator.to_csv(file_path)
 
     def plot_data(self, folder=None, dont_show=[]):
         for simulator in self.simulators:
@@ -41,10 +43,17 @@ class mestDS:
                     dont_show, filename=f"{folder}{slugify(simulator.name)}.png"
                 )
 
-    def evaluate(self):
+    def evaluate(self, simulations=None, path=None):
         for evaluator in self.evaluators:
             evaluator_copy = copy.deepcopy(evaluator)
-            evaluator_copy.evaluate(self.simulators)
+            if simulations:
+                evaluator_copy.evaluate(simulations=self.simulators)
+            elif path:
+                evaluator_copy.evaluate(path=path)
+            else:
+                print(
+                    "evaluate() requires either a list of simulations of a path to a compatible folder or a csv file"
+                )
 
 
 def parse_yaml(yaml_path):
@@ -143,37 +152,38 @@ def parse_yaml(yaml_path):
     dsl = load_yaml(yaml_path)
 
     public = dsl.get("public")
-    public_functions = public.get("functions")
-    public_lists = public.get("lists")
+    if public:
+        public_functions = public.get("functions")
+        public_lists = public.get("lists")
 
     _simulators = dsl.get("simulators")
     simulators = []
     _evaluators = dsl.get("evaluators")
     evaluators = []
-
-    for i, simulator in enumerate(_simulators):
-
-        inherits = simulator.get("inherit")
-        if inherits:
-            sim_to_inherit = next(sim for sim in simulators if sim.id == inherits)
-            sim = copy.deepcopy(sim_to_inherit)
-        else:
-            sim = Simulation()
-            sim.public_lists = public_lists
-        for key, value in simulator.items():
-            if key == "x":
-                sim = set_x_variables(value, sim)
-            elif key == "y":
-                sim = set_y_variables(value, sim)
-            elif key == "regions":
-                sim = set_regions(value, sim)
-            elif key != "inherits":
-                sim.__setattr__(key, value)
-        simulators.append(sim)
-
-    for evaluator in _evaluators:
-        eval = Evaluator(evaluator)
-        evaluators.append(eval)
+    if _simulators:
+        for simulator in _simulators:
+            print("parsing simulator")
+            inherits = simulator.get("inherit")
+            if inherits:
+                sim_to_inherit = next(sim for sim in simulators if sim.id == inherits)
+                sim = copy.deepcopy(sim_to_inherit)
+            else:
+                sim = Simulation()
+                sim.public_lists = public_lists
+            for key, value in simulator.items():
+                if key == "x":
+                    sim = set_x_variables(value, sim)
+                elif key == "y":
+                    sim = set_y_variables(value, sim)
+                elif key == "regions":
+                    sim = set_regions(value, sim)
+                elif key != "inherits":
+                    sim.__setattr__(key, value)
+            simulators.append(sim)
+    if _evaluators:
+        for evaluator in _evaluators:
+            eval = Evaluator(evaluator)
+            evaluators.append(eval)
 
     return simulators, evaluators
 

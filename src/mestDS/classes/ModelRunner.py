@@ -17,17 +17,17 @@ from mestDS.utils import get_forecast_dicts, get_metrics, get_plots
 class ModelRunner:
     def __init__(self, model_path, prediction_length, n_test_sets, stride):
         self.model_path = model_path
+        self.model = get_model_from_directory_or_github_url(
+            model_path, base_working_dir=Path("runs"), run_dir_type="use_existing"
+        )
         self.prediction_length = prediction_length
         self.n_test_sets = n_test_sets
         self.stride = stride
 
     def run(self, simulation=None, filename=None):
-        self.model = get_model_from_directory_or_github_url(
-            self.model_path, base_working_dir=Path("runs"), run_dir_type="use_existing"
-        )
         if simulation:
             filename = f"{self.model._working_dir}/{simulation.name}.csv"
-            simulation.convert_to_csv(filename)
+            simulation.to_csv(filename)
             name = simulation.name
         else:
             name = os.path.splitext(os.path.basename(filename))[0]
