@@ -3,6 +3,7 @@ from collections import defaultdict
 from datetime import datetime
 import os
 from pathlib import Path
+import re
 import shutil
 from typing import Literal
 import uuid
@@ -131,13 +132,11 @@ def generate_report(
     folder_path,
     model_name,
 ):
-    data_file = f"{folder_path}{simulation.simulation_name}/dataset.csv"
-    y_test_file = f"{folder_path}{simulation.simulation_name}/dataset_y_test.csv"
-    sample_0_file = f"{folder_path}{simulation.simulation_name}/predictions.csv"
-    dir_path = f"{folder_path}{simulation.simulation_name}"
-    pdf_file = (
-        f"{dir_path}/{model_name.replace("/","_")}_{simulation.simulation_name}.pdf"
-    )
+    data_file = f"{folder_path}{simulation.name}/dataset.csv"
+    y_test_file = f"{folder_path}{simulation.name}/dataset_y_test.csv"
+    sample_0_file = f"{folder_path}{simulation.name}/predictions.csv"
+    dir_path = f"{folder_path}{simulation.name}"
+    pdf_file = f"{dir_path}/{model_name.replace("/","_")}_{simulation.name}.pdf"
 
     features_to_plot = []
 
@@ -247,9 +246,7 @@ def generate_report(
     # Subtitle and simulation/model details
     pdf.set_font("Times", "I", 14)
     pdf.cell(200, 10, txt=f"Model: {model_name}", ln=True, align="C")
-    pdf.cell(
-        200, 10, txt=f"Simulation: {simulation.simulation_name}", ln=True, align="C"
-    )
+    pdf.cell(200, 10, txt=f"Simulation: {simulation.name}", ln=True, align="C")
     pdf.ln(10)
     # Table of Contents
     pdf.set_font("Times", "B", 12)
@@ -792,3 +789,11 @@ def get_metrics(full_ds, forecast_dicts):
         pcd = pocid(actual, predicted)
 
         yield LossMetrics(location, mse, pcd, tu)
+
+
+def slugify(name: str) -> str:
+    name = name.lower()
+    name = name.replace("=", "equals")
+    name = re.sub(r"[^\w\s\-]", "", name)
+    name = re.sub(r"\s+", "_", name)
+    return name

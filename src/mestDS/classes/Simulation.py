@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 import inspect
 import os
 import subprocess
-from typing import Dict, Literal
+from typing import Any, Dict, Literal
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 from ..default_variables import DATEFORMAT, TIMEDELTA
 from ..utils import generate_report, generate_report_v2, train_test_split_csv
-from .Feature import Feature
+from .Feature import Variable
 from .Region import Region
 from .RainSeason import RainSeason
 
@@ -23,22 +23,24 @@ def softmax(x):
     return np.exp(x) / np.sum(np.exp(x), axis=0)
 
 
-class List:
-    name: str
-    data: list[float]
+# class List:
+#     name: str
+#     data: list[float]
 
 
 class Simulation:
     id: int
-    time_granularity: Literal["D", "W", "M"]
-    simulation_length: int
-    simulation_start_date: datetime.date
+    name: str
+    time_delta: Literal["D", "W", "M"] = "W"
+    length: int = 100
+    start_date: datetime.date = datetime.date(2024, 1, 1)
     regions: list[Region]
+    x: list[Variable]
+    y: list[Variable]
+    public_lists: dict[str, Any]
     data: Dict[str, Dict[str, list[float]]]
-    features: list[Feature]
     current_i: int
     current_region: str
-    simulation_name: str
     full_set_path: str
     train_set_x_path: str
     train_set_y_path: str
@@ -46,100 +48,109 @@ class Simulation:
     test_set_y_path: str
 
     def __init__(self):
-        self.features = []
+        self.x = []
+        self.y = []
         self.regions = []
 
     def simulate(self):
-        self.simulation_start_date = datetime.date(2024, 1, 1)
-        self.place_target_last_in_list()
         self.initialize_data()
-        delta = TIMEDELTA[self.time_granularity]
-        for i in range(1, self.simulation_length):
+        delta = TIMEDELTA[self.time_delta]
+        for i in range(1, self.length):
 
-            if self.time_granularity == "W":
-                current_date = self.simulation_start_date + datetime.timedelta(weeks=i)
+            if self.time_delta == "W":
+                current_date = self.start_date + datetime.timedelta(weeks=i)
                 iso_year, iso_week, _ = current_date.isocalendar()
                 current_date_str = f"{iso_year}W{iso_week}"  # Correct week format
-            elif self.time_granularity == "M":
-                current_date = self.simulation_start_date + relativedelta(months=i)
-                current_date_str = current_date.strftime(
-                    DATEFORMAT[self.time_granularity]
-                )
+            elif self.time_delta == "M":
+                current_date = self.start_date + relativedelta(months=i)
+                current_date_str = current_date.strftime(DATEFORMAT[self.time_delta])
             else:
-                current_date = self.simulation_start_date + (i * delta)
-                current_date_str = current_date.strftime(
-                    DATEFORMAT[self.time_granularity]
-                )
+                current_date = self.start_date + (i * delta)
+                current_date_str = current_date.strftime(DATEFORMAT[self.time_delta])
 
             self.current_i = i
             for region in self.regions:
                 self.data[region.name]["time_period"].append(current_date_str)
                 self.current_region = region
-                for feature in self.features:
-                    self.calculate_feature(feature)
+                for variable in self.x:
+                    self.calculate_variable(variable)
+                for variable in self.y:
+                    self.calculate_variable(variable)
 
-    def adjust_beta(self):
-        beta_values = [feature.beta for feature in self.features]
-        beta_values_adjusted = softmax(beta_values)
-        for i, beta in enumerate(beta_values_adjusted):
-            self.features[i].beta = beta
-
-    def calculate_feature(self, feature: Feature):
+    def calculate_variable(self, variable: Variable):
         local_context = {}
         exec(
-            feature.function,
-            {"np": np, "i": self.current_i, "region": self.current_region},
+            variable.function,
+            {
+                "np": np,
+                "i": self.current_i,
+                "region": self.current_region,
+            },
             local_context,
         )
         func_name = list(local_context.keys())[0]
         func = local_context[func_name]
         signature = inspect.signature(func)
         parameters_required = signature.parameters
-
-        args = [self.get_feature(param) for param in parameters_required]
+        args = [
+            self.get_variable(param, variable.params) for param in parameters_required
+        ]
         result = func(*args)
 
-        self.data[self.current_region.name][feature.name].append(result)
+        self.data[self.current_region.name][variable.name].append(result)
 
-    def get_feature(self, param):
-        if param == "region":
+    def get_variable(self, param_name, variable_params):
+        # Special keywords
+        if param_name == "region":
             return self.current_region
-        if param == "i":
+        if param_name == "i":
             return self.current_i
-        for feat in self.features:
-            if feat.name == param:
-                return self.data[self.current_region.name][param]
-        return None
+
+        # Check if param is explicitly passed in params
+        if variable_params and param_name in variable_params:
+            if (
+                param_name == "variable"
+            ):  # the name "variable" is a reserved keyword. If param_name is "variable", it should look for the value in the dataset
+                param_name = variable_params[param_name]
+            else:
+                return variable_params[param_name]
+
+        if param_name in self.public_lists:
+            return self.public_lists[param_name]
+        # Else, treat it as a reference to a public variable
+        if param_name in self.data[self.current_region.name]:
+            return self.data[self.current_region.name][param_name]
+
+        raise ValueError(f"Parameter '{param_name}' could not be resolved.")
 
     def initialize_data(self):
         self.data = {region.name: {} for region in self.regions}
         for region in self.regions:
             self.data[region.name] = {}
-            if self.time_granularity == "W":
-                current_date = self.simulation_start_date + datetime.timedelta(weeks=0)
+            if self.time_delta == "W":
+                current_date = self.start_date + datetime.timedelta(weeks=0)
                 iso_year, iso_week, _ = current_date.isocalendar()
                 current_date_str = f"{iso_year}W{iso_week}"
                 self.data[region.name]["time_period"] = [current_date_str]
             else:
                 self.data[region.name]["time_period"] = [
                     datetime.datetime.strftime(
-                        self.simulation_start_date, DATEFORMAT[self.time_granularity]
+                        self.start_date, DATEFORMAT[self.time_delta]
                     )
                 ]
 
-            for feature in self.features:
-                self.data[region.name][feature.name] = [0]
+            for variable in self.x:
+                self.data[region.name][variable.name] = [0]
+            for variable in self.y:
+                self.data[region.name][variable.name] = [0]
 
-    def place_target_last_in_list(self):
-        for f in self.features:
-            if getattr(f, "target", True):
-                self.features.remove(f)
-                self.features.append(f)
-
-    def plot_data(self, dont_show):
+    def plot_data(self, dont_show, filename=None):
         regions = self.data.keys()
         variables = [
-            feature.name for feature in self.features if feature.name not in dont_show
+            variable.name for variable in self.x if variable.name not in dont_show
+        ]
+        variables += [
+            variable.name for variable in self.y if variable.name not in dont_show
         ]
         for region in regions:
             plt.figure(figsize=(10, 6))
@@ -147,12 +158,17 @@ class Simulation:
             for var in variables:
                 plt.plot(self.data[region][var], label=f"{region} - {var}")
 
-            plt.title(self.simulation_name)
+            plt.title(self.name)
             plt.xlabel("Time")
             plt.ylabel("Values")
             plt.legend()
             plt.tight_layout()
-            plt.show()
+            if filename:
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
+                plt.savefig(filename)
+            else:
+                plt.show()
+            plt.close()
 
     def convert_to_csv(self, file_path):
 
@@ -160,16 +176,19 @@ class Simulation:
 
         csv_rows = []
         columns = ["time_period"]
-        columns += [feature.name for feature in self.features]
+        columns += [variable.name for variable in self.x]
+        columns += [variable.name for variable in self.y]
         columns.append("location")
         csv_rows.append(columns)
 
         for region in self.regions:
-            for i in range(len(self.data[region.name][self.features[0].name])):
+            for i in range(len(self.data[region.name][self.x[0].name])):
                 row = []
                 row.append(self.data[region.name]["time_period"][i])
-                for feature in self.features:
-                    row.append(self.data[region.name][feature.name][i])
+                for variable in self.x:
+                    row.append(self.data[region.name][variable.name][i])
+                for variable in self.y:
+                    row.append(self.data[region.name][variable.name][i])
                 row.append(region.name)
                 csv_rows.append(row)
 

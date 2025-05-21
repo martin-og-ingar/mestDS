@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from chap_core.external.external_model import (
     get_model_from_directory_or_github_url,
@@ -24,29 +25,34 @@ class ModelRunner:
         self.n_test_sets = n_test_sets
         self.stride = stride
 
-    def run(self, simulation):
+    def run(self, simulation=None, filename=None):
         self.model = get_model_from_directory_or_github_url(
-            self.model_path, base_working_dir=Path("runs")
+            self.model_path, base_working_dir=Path("runs"), run_dir_type="use_existing"
         )
-        filename = f"{self.model._working_dir}/{simulation.simulation_name}.csv"
+        if simulation:
+            filename = f"{self.model._working_dir}/{simulation.name}.csv"
+            simulation.convert_to_csv(filename)
+            name = simulation.name
+        else:
+            name = os.path.splitext(os.path.basename(filename))[0]
 
-        simulation.convert_to_csv(filename)
-        full_ds = DataSet.from_csv(filename, FullData)
+        dataset = DataSet.from_csv(filename, FullData)
 
         train, test_generator = train_test_generator(
-            full_ds, self.prediction_length, self.n_test_sets, stride=self.stride
+            dataset, self.prediction_length, self.n_test_sets, stride=self.stride
         )
         predictor = self.model.train(train)
 
         forecasts = []
         test_ds = []
+
         for historic_data, future_data, future_disease_cases in test_generator:
             forecast = predictor.predict(historic_data, future_data)
             forecasts.append(forecast)
             test_ds.append(future_disease_cases)
         forecast_dicts = get_forecast_dicts(forecasts)
         return Result(
-            simulation.simulation_name,
-            get_plots(full_ds, forecast_dicts),
+            name,
+            get_plots(dataset, forecast_dicts),
             get_metrics(test_ds, forecast_dicts),
         )

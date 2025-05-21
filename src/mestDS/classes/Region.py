@@ -1,15 +1,16 @@
 # from mestDS.default_variables import DEFAULT_RAIN_SEASON
 from .RainSeason import RainSeason
+from typing import Any
 
 
 class Region:
     name: str
     region_id: int
-    rain_season: list[RainSeason]
+    seasons: dict[str, Any]
     neighbour: list[int]
 
-    def __init__(self, name="", region_id=0, rain_season=[], neighbour=[]):
+    def __init__(self, name="", region_id=0, seasons=None, neighbour=None):
         self.name = name
         self.region_id = region_id
-        self.rain_season = rain_season
-        self.neighbour = neighbour
+        self.seasons = seasons if seasons is not None else {}
+        self.neighbour = neighbour if neighbour is not None else []

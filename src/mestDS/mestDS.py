@@ -3,215 +3,182 @@ import os
 import subprocess
 import yaml
 
-from mestDS.classes.Feature import Feature
+from mestDS.classes.Feature import Variable
 from mestDS.classes.RainSeason import RainSeason
 from mestDS.classes.Region import Region
 from mestDS.classes.evaluation.Evaluator import Evaluator
 from mestDS.classes.evaluation.EvaluatorGenerator import EvaluatorGenerator
 from mestDS.classes.Simulation import Simulation
 
-from mestDS.utils import generate_report, train_test_split_csv
+from mestDS.utils import generate_report, slugify, train_test_split_csv
 
 
 class mestDS:
 
-    simulations: list[Simulation]
+    simulators: list[Simulation]
     evaluators: list
     is_converted_to_csvs: bool
     folder_path: str
 
     def __init__(self, dsl_path):
-        self.simulations, self.evaluators = parse_yaml(dsl_path)
-        self.is_converted_to_csvs = False
+        self.simulators, self.evaluators = parse_yaml(dsl_path)
 
     def simulate(self):
-        for simulation in self.simulations:
-            simulation.simulate()
+        for simulator in self.simulators:
+            simulator.simulate()
 
     def convert_to_csvs(self, folder_path):
         self.folder_path = folder_path
-        for i, simulation in enumerate(self.simulations):
+        for simulator in self.simulators:
             os.makedirs(
-                os.path.dirname(f"{folder_path}{simulation.simulation_name}/"),
+                os.path.dirname(f"{folder_path}{simulator.name}/"),
                 exist_ok=True,
             )
-            file_path = f"{folder_path}{simulation.simulation_name}/dataset.csv"
-            simulation.convert_to_csv(file_path)
-        self.is_converted_to_csvs = True
+            file_path = f"{folder_path}{simulator.name}/dataset.csv"
+            simulator.convert_to_csv(file_path)
 
-    def csv_train_test_split(
-        self, split_train=False, exclude_features=[], test_size=0.2
-    ):
-        for i, simulation in enumerate(self.simulations):
-            train_test_split_csv(
-                f"{self.folder_path}{simulation.simulation_name or i}/dataset.csv",
-                f"{self.folder_path}{simulation.simulation_name or i}/",
-                exclude_feature=exclude_features,
-                split_train=split_train,
-                test_size=test_size,
-                time_granularity=simulation.time_granularity,
-            )
-
-    def eval_chap_model(self, model_name, exclude_features=[]):
-        self.csv_train_test_split(exclude_features)
-
-        for simulation in self.simulations:
-            train_command = [
-                "python",
-                f"{model_name}/train.py",
-                f"{self.folder_path}{simulation.simulation_name}/dataset_train.csv",
-                f"{self.folder_path}{simulation.simulation_name}/model.bin",
-            ]
-            subprocess.run(train_command, check=True)
-
-            test_command = [
-                "python",
-                f"{model_name}/predict.py",
-                f"{self.folder_path}{simulation.simulation_name}/model.bin",
-                f"{self.folder_path}{simulation.simulation_name}/dataset_train.csv",
-                f"{self.folder_path}{simulation.simulation_name}/dataset_x_test.csv",
-                f"{self.folder_path}{simulation.simulation_name}/predictions.csv",
-            ]
-
-            subprocess.run(test_command, check=True)
-
-            generate_report(
-                simulation,
-                self.folder_path,
-                model_name=model_name,
-            )
-
-    def plot_data(self, dont_show=[]):
-        for sim in self.simulations:
-            sim.plot_data(dont_show)
+    def plot_data(self, folder=None, dont_show=[]):
+        for simulator in self.simulators:
+            if folder:
+                simulator.plot_data(
+                    dont_show, filename=f"{folder}{slugify(simulator.name)}.png"
+                )
 
     def evaluate(self):
         for evaluator in self.evaluators:
             evaluator_copy = copy.deepcopy(evaluator)
-            evaluator_copy.evaluate(self.simulations)
+            evaluator_copy.evaluate(self.simulators)
 
 
 def parse_yaml(yaml_path):
+
+    def set_x_variables(_x, sim):
+        for x in _x:
+            name = x.get("name")
+            index = next(
+                (i for i, variable in enumerate(sim.x) if name == variable.name),
+                None,
+            )
+            if index is None:
+                sim.x.append(Variable())
+                index = len(sim.x) - 1
+            for key, value in x.items():
+                if key == "function":
+                    sim.x[index].function = value
+                elif key == "function_ref":
+                    sim.x[index].function = public_functions.get(value)
+                elif key == "params":
+                    if (
+                        not hasattr(sim.x[index], "params")
+                        or sim.x[index].params is None
+                    ):
+                        sim.x[index].params = {}
+                    for param_key, param_value in value.items():
+                        sim.x[index].params[
+                            param_key
+                        ] = param_value  # Only updates provided keys
+                else:
+                    setattr(sim.x[index], key, value)
+        return sim
+
+    def set_y_variables(_y, sim):
+        for y in _y:
+            name = y.get("name")
+            index = next(
+                (i for i, variable in enumerate(sim.y) if name == variable.name),
+                None,
+            )
+            if index is None:
+                sim.y.append(Variable())
+                index = len(sim.y) - 1
+            for key, value in y.items():
+                if key == "function":
+                    sim.y[index].function = value
+                elif key == "function_ref":
+                    sim.y[index].function = public_functions.get(value)
+                elif key == "params":
+                    if (
+                        not hasattr(sim.y[index], "params")
+                        or sim.y[index].params is None
+                    ):
+                        sim.y[index].params = {}
+                    for param_key, param_value in value.items():
+                        sim.y[index].params[
+                            param_key
+                        ] = param_value  # Only updates provided keys
+                else:
+                    setattr(sim.y[index], key, value)
+        return sim
+
+    def set_regions(regions, sim):
+        for region in regions:
+            name = region.get("name")
+            index = next(
+                (i for i, r in enumerate(sim.regions) if name == r.name),
+                None,
+            )
+            if index is None:
+                sim.regions.append(Region())
+                index = len(sim.regions) - 1  # safer than -1
+
+            for key, value in region.items():
+                if key == "seasons":
+                    if (
+                        not hasattr(sim.regions[index], "seasons")
+                        or sim.regions[index].seasons is None
+                    ):
+                        sim.regions[index].seasons = {}
+                    for season_entry in value:
+                        season_name = season_entry.get("name")
+                        season_data = season_entry.get("season")
+                        if season_data is None:
+                            season_ref = season_entry.get("season_ref")
+                            season_data = public_lists.get(season_ref)
+                        if season_name and season_data:
+                            sim.regions[index].seasons[
+                                season_name
+                            ] = season_data  # update, not overwrite
+                else:
+                    setattr(sim.regions[index], key, value)
+
+        return sim
+
     dsl = load_yaml(yaml_path)
-    dsl_simulations = dsl.get("simulations", {})
-    simulations = []
-    for simulation in dsl_simulations:
-        inherits = simulation.get("inherits")
+
+    public = dsl.get("public")
+    public_functions = public.get("functions")
+    public_lists = public.get("lists")
+
+    _simulators = dsl.get("simulators")
+    simulators = []
+    _evaluators = dsl.get("evaluators")
+    evaluators = []
+
+    for i, simulator in enumerate(_simulators):
+
+        inherits = simulator.get("inherit")
         if inherits:
-            sim_to_inherit = next(sim for sim in simulations if sim.id == inherits)
+            sim_to_inherit = next(sim for sim in simulators if sim.id == inherits)
             sim = copy.deepcopy(sim_to_inherit)
         else:
             sim = Simulation()
-
-        for key, value in simulation.items():
-            if key == "regions":
-                regions = []
-                for reg in value:
-                    region = Region()
-                    for key, value in reg.items():
-                        if key == "rain_season":
-                            rain_season = []
-                            for season in value:
-                                rain_season.append(RainSeason(season[0], season[1]))
-                            region.__setattr__(key, rain_season)
-                        else:
-                            region.__setattr__(key, value)
-                    regions.append(region)
-                sim.regions = regions
-            if key == "features":
-                for feat in value:
-                    feat_name = feat.get("name")
-                    index = next(
-                        (
-                            i
-                            for i, feature in enumerate(sim.features)
-                            if feat_name == feature.name
-                        ),
-                        None,
-                    )
-                    if index is not None:
-                        sim.features[index].function = feat.get("function", {})
-                    else:
-                        feature = Feature()
-                        for key, value in feat.items():
-                            feature.__setattr__(key, value)
-                        sim.features.append(feature)
-
+            sim.public_lists = public_lists
+        for key, value in simulator.items():
+            if key == "x":
+                sim = set_x_variables(value, sim)
+            elif key == "y":
+                sim = set_y_variables(value, sim)
+            elif key == "regions":
+                sim = set_regions(value, sim)
             elif key != "inherits":
                 sim.__setattr__(key, value)
+        simulators.append(sim)
 
-        simulations.append(sim)
-
-    dsl_evaluators = dsl.get("evaluators", {})
-    evaluators = []
-    for evaluator in dsl_evaluators:
-        # eval = EvaluatorGenerator(evaluator).create_evaluator()
+    for evaluator in _evaluators:
         eval = Evaluator(evaluator)
         evaluators.append(eval)
 
-    return simulations, evaluators
-
-
-def parse_yaml_deprecated(yaml_path):
-    parameters = load_yaml(yaml_path)
-    sim_base = Simulation()
-    base = parameters.get("simulations", {})
-    for key, value in base.items():
-        if key == "regions":
-            regions = []
-            for reg in value:
-                region = Region()
-                for key, value in reg.items():
-                    if key == "rain_season":
-                        rain_season = []
-                        for season in value:
-                            rain_season.append(RainSeason(season[0], season[1]))
-                        region.__setattr__(key, rain_season)
-                    else:
-                        region.__setattr__(key, value)
-                regions.append(region)
-            sim_base.regions = regions
-        if key == "features":
-            features = []
-            for feat in value:
-                feature = Feature()
-                for key, value in feat.items():
-                    feature.__setattr__(key, value)
-                features.append(feature)
-            sim_base.features = features
-        else:
-            sim_base.__setattr__(key, value)
-
-    simulations = parameters.get("simulations", {})
-    sims = [sim_base]
-    for simulation in simulations:
-        sim = copy.deepcopy(sim_base)
-        for key, value in simulation.items():
-            if key == "features":
-                for feat in value:
-                    feat_name = feat.get("name")
-                    if feat_name is None:
-                        raise ValueError
-                    index = next(
-                        (
-                            i
-                            for i, feature in enumerate(sim.features)
-                            if feat_name == feature.name
-                        )
-                    )
-                    sim.features[index].function = feat.get("function", {})
-            else:
-                sim.__setattr__(key, value)
-        sims.append(sim)
-
-    evaluators = parameters.get("evaluators", {})
-    evals = []
-    for evaluator in evaluators:
-        # eval = EvaluatorGenerator(evaluator).create_evaluator()
-        eval = Evaluator(evaluator)
-        evals.append(eval)
-
-    return sims, evals
+    return simulators, evaluators
 
 
 def load_yaml(yaml_path):
