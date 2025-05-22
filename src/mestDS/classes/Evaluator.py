@@ -56,8 +56,7 @@ class Evaluator:
         pdf.add_page()
         pdf.add_header(f"Model Evaluation: {self.runner.model.name}")
         for result in self.results:
-            for plot in result.plots:
-                pdf.add_subheader_table_and_plot(result.name, result.metrics, plot)
+            pdf.add_subheader_table_and_plot(result)
 
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         pdf.output(filename)

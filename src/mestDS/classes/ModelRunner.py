@@ -15,7 +15,7 @@ from mestDS.utils import get_forecast_dicts, get_metrics, get_plots
 
 
 class ModelRunner:
-    def __init__(self, model_path, prediction_length, n_test_sets, stride):
+    def __init__(self, model_path, prediction_length, n_test_sets, stride, metrics):
         self.model_path = model_path
         self.model = get_model_from_directory_or_github_url(
             model_path, base_working_dir=Path("runs"), run_dir_type="use_existing"
@@ -23,6 +23,7 @@ class ModelRunner:
         self.prediction_length = prediction_length
         self.n_test_sets = n_test_sets
         self.stride = stride
+        self.metrics = metrics
 
     def run(self, simulation=None, filename=None):
         if simulation:
@@ -50,5 +51,5 @@ class ModelRunner:
         return Result(
             name,
             get_plots(dataset, forecast_dicts),
-            get_metrics(test_ds, forecast_dicts),
+            get_metrics(test_ds, forecast_dicts, self.metrics),
         )

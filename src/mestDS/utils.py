@@ -26,7 +26,8 @@ def set_runner(config):
     pred_len = config.get("prediction_length") or 12
     n_test_sets = config.get("n_test_sets") or 1
     stride = config.get("stride") or 1
-    return ModelRunner(model_path, pred_len, n_test_sets, stride)
+    metrics = config.get("metrics") or ["mse", "theils_u", "pocid"]
+    return ModelRunner(model_path, pred_len, n_test_sets, stride, metrics)
 
 
 def get_forecast_dicts(forecasts):
@@ -92,31 +93,21 @@ def get_plots(full_ds, forecast_dicts):
         yield plt
 
 
-def theils_u(y_true, y_pred):
-    y_true = np.array(y_true)
-    y_pred = np.array(y_pred)
-
-    rmse_model = np.sqrt(np.mean((y_true - y_pred) ** 2))
-
-    naive_forecast = y_true[:-1]
-    actual_values = y_true[1:]
-
-    rmse_naive = np.sqrt(np.mean((actual_values - naive_forecast) ** 2))
-
-    if rmse_naive == 0:
-        return np.nan
-
-    return round(rmse_model / rmse_naive, 4)
+def slugify(name: str) -> str:
+    name = name.lower()
+    name = name.replace("=", "equals")
+    name = re.sub(r"[^\w\s\-]", "", name)
+    name = re.sub(r"\s+", "_", name)
+    return name
 
 
-def pocid(y_true, y_pred):
-    direction_true = np.sign(np.diff(y_true))
-    direction_pred = np.sign(np.diff(y_pred))
-    correct = np.sum(direction_true == direction_pred)
-    return round((correct / len(direction_true)) * 100, 2)
+def ensure_trailing_slash(path: str) -> str:
+    if not path.endswith("/"):
+        path += "/"
+    return path
 
 
-def get_metrics(full_ds, forecast_dicts):
+def get_metrics(full_ds, forecast_dicts, metrics):
     for location in full_ds[0].keys():
         location_actual = [
             entry.disease_cases for ds in full_ds for entry in ds[location]
@@ -134,22 +125,118 @@ def get_metrics(full_ds, forecast_dicts):
                 f"Shape mismatch for location {location}: predicted {predicted.shape}, actual {actual.shape}"
             )
 
-        mse = round(np.mean((predicted - actual) ** 2), 2)
-        tu = theils_u(actual, predicted)
-        pcd = pocid(actual, predicted)
+        metrics_dict = {
+            metric: loss_metric(metric, actual, predicted) for metric in metrics
+        }
 
-        yield LossMetrics(location, mse, pcd, tu)
-
-
-def slugify(name: str) -> str:
-    name = name.lower()
-    name = name.replace("=", "equals")
-    name = re.sub(r"[^\w\s\-]", "", name)
-    name = re.sub(r"\s+", "_", name)
-    return name
+        yield LossMetrics(location, metrics_dict)
 
 
-def ensure_trailing_slash(path: str) -> str:
-    if not path.endswith("/"):
-        path += "/"
-    return path
+def loss_metric(metric: str, y_true, y_pred, quantile=0.5, seasonality=1):
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    metric = metric.lower()
+
+    # Helper functions
+    def mae():
+        return np.mean(np.abs(y_true - y_pred))
+
+    def mse():
+        return np.mean((y_true - y_pred) ** 2)
+
+    def rmse():
+        return np.sqrt(mse())
+
+    def mape():
+        return np.mean(np.abs((y_true - y_pred) / np.clip(y_true, 1e-10, None))) * 100
+
+    def smape():
+        return 100 * np.mean(
+            2
+            * np.abs(y_pred - y_true)
+            / np.clip(np.abs(y_true) + np.abs(y_pred), 1e-10, None)
+        )
+
+    def wape():
+        return np.sum(np.abs(y_true - y_pred)) / np.clip(
+            np.sum(np.abs(y_true)), 1e-10, None
+        )
+
+    def rmsle():
+        return np.sqrt(np.mean((np.log1p(y_pred) - np.log1p(y_true)) ** 2))
+
+    def mase():
+        naive_forecast = y_true[:-seasonality]
+        actual = y_true[seasonality:]
+        mae_naive = np.mean(np.abs(actual - naive_forecast))
+        return mae() / np.clip(mae_naive, 1e-10, None)
+
+    def rmsse():
+        naive_forecast = y_true[:-seasonality]
+        actual = y_true[seasonality:]
+        mse_naive = np.mean((actual - naive_forecast) ** 2)
+        return rmse() / np.clip(np.sqrt(mse_naive), 1e-10, None)
+
+    def sql():
+        return np.mean(
+            2
+            * np.maximum(
+                quantile * (y_true - y_pred), (quantile - 1) * (y_true - y_pred)
+            )
+        )
+
+    def wql():
+        weights = np.abs(y_true)
+        return np.sum(
+            weights
+            * np.maximum(
+                quantile * (y_true - y_pred), (quantile - 1) * (y_true - y_pred)
+            )
+        ) / np.clip(np.sum(weights), 1e-10, None)
+
+    def theils_u():
+        _y_true = np.array(y_true)
+        _y_pred = np.array(y_pred)
+
+        rmse_model = np.sqrt(np.mean((_y_true - _y_pred) ** 2))
+
+        naive_forecast = _y_true[:-1]
+        actual_values = _y_true[1:]
+
+        rmse_naive = np.sqrt(np.mean((actual_values - naive_forecast) ** 2))
+
+        if rmse_naive == 0:
+            return np.nan
+
+        return round(rmse_model / rmse_naive, 4)
+
+    def pocid():
+        direction_true = np.sign(np.diff(y_true))
+        direction_pred = np.sign(np.diff(y_pred))
+        correct = np.sum(direction_true == direction_pred)
+        return round((correct / len(direction_true)) * 100, 2)
+
+    metrics = {
+        "mae": mae,
+        "mape": mape,
+        "mase": mase,
+        "mse": mse,
+        "rmse": rmse,
+        "rmsle": rmsle,
+        "rmsse": rmsse,
+        "smape": smape,
+        "wape": wape,
+        "sql": sql,
+        "wql": wql,
+        "pocid": pocid,
+        "theils_u": theils_u,
+    }
+
+    if metric not in metrics:
+        raise ValueError(
+            f"Unsupported metric '{metric}'. Supported metrics: {list(metrics.keys())}"
+        )
+
+    value = metrics[metric]()
+
+    return round(value, 2)

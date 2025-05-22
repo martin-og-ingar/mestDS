@@ -9,4 +9,4 @@ from .LossMetrics import LossMetrics
 class Result:
     name: str
     plots: list[matplotlib.figure.Figure]
-    metrics: list[LossMetrics]
+    location_metrics: list[LossMetrics]
