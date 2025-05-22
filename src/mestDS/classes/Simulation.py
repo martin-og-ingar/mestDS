@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-from ..default_variables import DATEFORMAT, TIMEDELTA
+from ..default_variables import DATEFORMAT, DEFAULT_REGIONS, TIMEDELTA
 from .Feature import Variable
 from .Region import Region
 
@@ -105,7 +105,7 @@ class Simulation:
             else:
                 return variable_params[param_name]
 
-        if param_name in self.public_lists:
+        if self.public_lists and param_name in self.public_lists:
             return self.public_lists[param_name]
         # Else, treat it as a reference to a public variable
         if param_name in self.data[self.current_region.name]:
@@ -114,6 +114,8 @@ class Simulation:
         raise ValueError(f"Parameter '{param_name}' could not be resolved.")
 
     def initialize_data(self):
+        if len(self.regions) == 0:
+            self.regions = DEFAULT_REGIONS
         self.data = {region.name: {} for region in self.regions}
         for region in self.regions:
             self.data[region.name] = {}

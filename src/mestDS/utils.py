@@ -147,3 +147,9 @@ def slugify(name: str) -> str:
     name = re.sub(r"[^\w\s\-]", "", name)
     name = re.sub(r"\s+", "_", name)
     return name
+
+
+def ensure_trailing_slash(path: str) -> str:
+    if not path.endswith("/"):
+        path += "/"
+    return path

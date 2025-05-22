@@ -7,7 +7,7 @@ from mestDS.classes.Region import Region
 from mestDS.classes.Evaluator import Evaluator
 from mestDS.classes.Simulation import Simulation
 
-from mestDS.utils import slugify
+from mestDS.utils import ensure_trailing_slash, slugify
 
 
 class mestDS:
@@ -27,7 +27,7 @@ class mestDS:
         return self.simulators
 
     def to_csvs(self, folder):
-        self.folder_path = folder
+        folder = ensure_trailing_slash(folder)
         os.makedirs(
             os.path.dirname(f"{folder}"),
             exist_ok=True,
@@ -40,16 +40,23 @@ class mestDS:
         for simulator in self.simulators:
             if folder:
                 simulator.plot_data(
-                    dont_show, filename=f"{folder}{slugify(simulator.name)}.png"
+                    dont_show,
+                    filename=f"{ensure_trailing_slash(folder)}{slugify(simulator.name)}.png",
+                )
+            else:
+                simulator.plot_data(
+                    dont_show,
                 )
 
-    def evaluate(self, simulations=None, path=None):
+    def evaluate(self, simulations=None, path=None, report_path="reports/"):
         for evaluator in self.evaluators:
             evaluator_copy = copy.deepcopy(evaluator)
             if simulations:
-                evaluator_copy.evaluate(simulations=self.simulators)
+                evaluator_copy.evaluate(
+                    simulations=self.simulators, report_path=report_path
+                )
             elif path:
-                evaluator_copy.evaluate(path=path)
+                evaluator_copy.evaluate(path=path, report_path=report_path)
             else:
                 print(
                     "evaluate() requires either a list of simulations of a path to a compatible folder or a csv file"
@@ -162,7 +169,6 @@ def parse_yaml(yaml_path):
     evaluators = []
     if _simulators:
         for simulator in _simulators:
-            print("parsing simulator")
             inherits = simulator.get("inherit")
             if inherits:
                 sim_to_inherit = next(sim for sim in simulators if sim.id == inherits)

@@ -9,7 +9,7 @@ from mestDS.classes.ModelRunner import ModelRunner
 from mestDS.classes.Result import Result
 from mestDS.classes.Simulation import Simulation
 from mestDS.classes.PDF import PDF
-from mestDS.utils import set_runner
+from mestDS.utils import ensure_trailing_slash, set_runner
 
 
 class Evaluator:
@@ -21,7 +21,12 @@ class Evaluator:
         self.time_delta = config.get("time_delta")
         self.results = []
 
-    def evaluate(self, simulations: list[Simulation] = None, path: str = None):
+    def evaluate(
+        self,
+        report_path,
+        simulations: list[Simulation] = None,
+        path: str = None,
+    ):
 
         print(f"mestDS - Evaluator running on model {self.runner.model_path}")
         if simulations:
@@ -29,7 +34,7 @@ class Evaluator:
                 _sim = copy.deepcopy(sim)
                 if self.time_delta:
                     _sim.time_delta = self.time_delta
-                _sim.simulate()
+                    _sim.simulate()
                 self.results.append(self.runner.run(simulation=_sim))
         elif path:
             path_obj = Path(path)
@@ -40,16 +45,19 @@ class Evaluator:
                     self.results.append(self.runner.run(filename=filename))
             else:
                 print(f"Path '{path}' is not a valid CSV file or directory.")
-        self.generate_report()
+        self.generate_report(report_path)
 
-    def generate_report(self):
-        os.makedirs("reports", exist_ok=True)
+    def generate_report(self, path):
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = f"reports/{timestamp}_{self.runner.model.name}.pdf"
+        filename = (
+            f"{ensure_trailing_slash(path)}{timestamp}_{self.runner.model.name}.pdf"
+        )
         pdf = PDF(orientation="L")
         pdf.add_page()
         pdf.add_header(f"Model Evaluation: {self.runner.model.name}")
         for result in self.results:
             for plot in result.plots:
                 pdf.add_subheader_table_and_plot(result.name, result.metrics, plot)
+
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
         pdf.output(filename)

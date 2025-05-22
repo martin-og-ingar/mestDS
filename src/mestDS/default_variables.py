@@ -24,8 +24,10 @@ TIMEDELTA = {
 }
 DATEFORMAT = {"D": "%Y-%m-%d", "W": "%G-W%V", "M": "%Y-%m"}
 DEFAULT_REGIONS = [
-    Region("Masadi", 1, [2]),
-    Region("Kasama", 2, [1]),
+    Region(
+        "Masadi",
+        1,
+    ),
 ]
 
 DEFAULT_NUMBER_OF_FOLDS = 5
