@@ -47,26 +47,34 @@ class PDF(FPDF):
             self.image(tmpfile.name, x=x_position, w=image_width)
 
     def add_subheader_table_and_plot(self, result):
+        import textwrap
+        import tempfile
+
         location_metrics = list(result.location_metrics)
-        print(location_metrics)
-        self.add_page()  # Start each simulation section on a new landscape page
 
         # Subheader
         self.set_font("Helvetica", "B", 14)
-        self.cell(0, 10, result.name, ln=True)
+        self.cell(0, 10, f"Simulation: {result.name}", ln=True)
         self.ln(2)
-        # Table
-        self.ln(2)
+
+        # Description (wrapped)
+        if result.description is not None:
+            self.set_font("Helvetica", "", 12)
+            self.multi_cell(0, 8, f"Description: {result.description}")
+            self.ln(2)
+
+        # Ensure we're at the right Y position before adding table
         self.set_font("Helvetica", "B", 12)
         self.cell(40, 10, "Location", border=1, align="C")
         for key, _ in location_metrics[0].metrics.items():
             self.cell(40, 10, str(key), border=1, align="C")
+        self.set_font("Helvetica", "", 12)
         for metric in location_metrics:
             self.ln()
             self.cell(40, 10, str(metric.location), border=1)
             for _, value in metric.metrics.items():
                 self.cell(40, 10, str(value), border=1)
-        self.ln(2)
+        self.ln(10)
 
         # Get Y position after table and add padding
         y_after_table = self.get_y()
@@ -90,6 +98,8 @@ class PDF(FPDF):
                 plot.close()
                 x_position_mm = (page_width_mm - image_width_mm) / 2 + self.l_margin
                 self.image(tmpfile.name, x=x_position_mm, w=image_width_mm)
+
+        self.add_page()
 
     def ensure_space(self, required_height: float):
         remaining_height = self.h - self.get_y() - self.b_margin

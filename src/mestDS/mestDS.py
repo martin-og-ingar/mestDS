@@ -53,10 +53,14 @@ class mestDS:
             evaluator_copy = copy.deepcopy(evaluator)
             if simulations:
                 evaluator_copy.evaluate(
-                    simulations=self.simulators, report_path=report_path
+                    simulations=simulations, report_path=report_path
                 )
             elif path:
                 evaluator_copy.evaluate(path=path, report_path=report_path)
+            elif self.simulators:
+                evaluator_copy.evaluate(
+                    simulations=self.simulators, report_path=report_path
+                )
             else:
                 print(
                     "evaluate() requires either a list of simulations of a path to a compatible folder or a csv file"
@@ -79,7 +83,12 @@ def parse_yaml(yaml_path):
                 if key == "function":
                     sim.x[index].function = value
                 elif key == "function_ref":
-                    sim.x[index].function = public_functions.get(value)
+                    func = public_functions.get(value)
+                    if func is None:
+                        raise ValueError(
+                            f"Function reference '{value}' not found in public_functions."
+                        )
+                    sim.x[index].function = func
                 elif key == "params":
                     if (
                         not hasattr(sim.x[index], "params")
@@ -108,7 +117,12 @@ def parse_yaml(yaml_path):
                 if key == "function":
                     sim.y[index].function = value
                 elif key == "function_ref":
-                    sim.y[index].function = public_functions.get(value)
+                    func = public_functions.get(value)
+                    if func is None:
+                        raise ValueError(
+                            f"Function reference '{value}' not found in public_functions."
+                        )
+                    sim.y[index].function = func
                 elif key == "params":
                     if (
                         not hasattr(sim.y[index], "params")
@@ -175,7 +189,8 @@ def parse_yaml(yaml_path):
                 sim = copy.deepcopy(sim_to_inherit)
             else:
                 sim = Simulation()
-                sim.public_lists = public_lists
+                if public and public_lists:
+                    sim.public_lists = public_lists
             for key, value in simulator.items():
                 if key == "x":
                     sim = set_x_variables(value, sim)

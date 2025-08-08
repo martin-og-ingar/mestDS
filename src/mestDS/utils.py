@@ -1,14 +1,31 @@
 from collections import defaultdict
 from datetime import datetime
+import logging
+import os
+from pathlib import Path
 import re
+import shutil
+import uuid
+from venv import logger
 from matplotlib import dates
+from matplotlib.lines import Line2D
+from typing import Literal
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import yaml
 
 # from mestDS.classes.ModelRunner import ModelRunner
 from mestDS.classes.LossMetrics import LossMetrics
+import git
 from chap_core.data.gluonts_adaptor.dataset import ForecastAdaptor
+
+# from chap_core.external.external_model import (
+#     get_model_template_from_mlproject_file,
+#     get_model_from_mlproject_file,
+# )
+# from chap_core.external.mlflow_wrappers import ExternalModel
+from chap_core.exceptions import InvalidModelException
 
 
 def convert_time_period(period):
@@ -27,7 +44,11 @@ def set_runner(config):
     n_test_sets = config.get("n_test_sets") or 1
     stride = config.get("stride") or 1
     metrics = config.get("metrics") or ["mse", "theils_u", "pocid"]
-    return ModelRunner(model_path, pred_len, n_test_sets, stride, metrics)
+    plot_length = config.get("plot_length") or (pred_len * n_test_sets) * 4
+    user_options = config.get("user_options") or None
+    return ModelRunner(
+        model_path, pred_len, n_test_sets, stride, metrics, plot_length, user_options
+    )
 
 
 def get_forecast_dicts(forecasts):
@@ -40,9 +61,10 @@ def get_forecast_dicts(forecasts):
     return forecast_dicts
 
 
-def get_plots(full_ds, forecast_dicts):
+def get_plots(full_ds, forecast_dicts, plot_length):
     for location in full_ds.keys():
-        location_data = full_ds[location][-100:]
+        print(full_ds)
+        location_data = full_ds[location][-plot_length:]
 
         try:
             time_periods = pd.to_datetime(location_data.time_period.tolist())
@@ -64,7 +86,7 @@ def get_plots(full_ds, forecast_dicts):
             time_periods,
             location_data.rainfall,
             label="Rainfall",
-            color="blue",
+            color="royalblue",
             linestyle="-",
             alpha=0.2,
         )
@@ -72,7 +94,7 @@ def get_plots(full_ds, forecast_dicts):
             time_periods,
             location_data.mean_temperature,
             label="Mean temperature",
-            color="red",
+            color="crimson",
             linestyle="-",
             alpha=0.2,
         )
@@ -83,12 +105,12 @@ def get_plots(full_ds, forecast_dicts):
         ax.set_title(f"Disease Cases Forecast for {location}", fontsize=14)
         ax.set_xlabel("Time Period", fontsize=12)
         ax.set_ylabel("Number of Cases", fontsize=12)
-        ax.legend()
 
         for fore_dict in forecast_dicts:
-            fore_dict[location][0].plot(
-                color="darkorange", name="Predicted Disease Cases", show_label=True
-            )
+            fore_dict[location][0].plot(color="purple", ax=ax)
+
+        pred_legend = Line2D([0], [0], color="purple", label="Predicted Disease Cases")
+        ax.legend(handles=[pred_legend] + ax.get_legend_handles_labels()[0])
 
         yield plt
 
@@ -240,3 +262,174 @@ def loss_metric(metric: str, y_true, y_pred, quantile=0.5, seasonality=1):
     value = metrics[metric]()
 
     return round(value, 2)
+
+
+from chap_core.models.utils import (
+    _get_model_code_base,
+    get_model_template_from_mlproject_file,
+)
+from chap_core.models.model_template import ModelTemplate
+
+
+def get_model_template_from_directory_or_github_url(
+    model_template_path,
+    base_working_dir=Path("runs/"),
+    ignore_env=False,
+    run_dir_type="timestamp",
+    user_options=None,
+) -> ModelTemplate:
+    """
+    Note: Preferably use ModelTemplate.from_directory_or_github_url instead of
+    using this function directly. This function may be depcrecated in the future.
+
+    Gets the model template and initializes a working directory with the code for the model.
+    model_path can be a local directory or github url
+
+    Parameters
+    ----------
+    model_template_path : str
+        Path to the model. Can be a local directory or a github url
+    base_working_dir : Path, optional
+        Base directory to store the working directory, by default Path("runs/")
+    ignore_env : bool, optional
+        If True, will ignore the environment specified in the MLproject file, by default False
+    run_dir_type : Literal["timestamp", "latest", "use_existing"], optional
+        Type of run directory to create, by default "timestamp", which creates a new directory based on current timestamp for the run.
+        "latest" will create a new directory based on the model name, but will remove any existing directory with the same name.
+        "use_existing" will use the existing directory specified by the model path if that exists. If that does not exist, "latest" will be used.
+    """
+
+    logger.info(
+        f"Getting model template from {model_template_path}. Ignore env: {ignore_env}. Base working dir: {base_working_dir}. Run dir type: {run_dir_type}"
+    )
+    working_dir = _get_model_code_base(
+        model_template_path, base_working_dir, run_dir_type
+    )
+
+    logger.info(
+        f"Current directory is {os.getcwd()}, working dir is {working_dir.absolute()}"
+    )
+    assert os.path.isdir(working_dir), working_dir
+    assert os.path.isdir(os.path.abspath(working_dir)), working_dir
+
+    # assert that a config file exists
+    ml_project_path = working_dir / "MLproject"
+    if not (ml_project_path).exists():
+        raise InvalidModelException("No MLproject file found in model directory")
+    elif user_options is not None:
+        with open(working_dir / "MLproject", "r") as file:
+            config = yaml.load(file, Loader=yaml.FullLoader)
+            print(config)
+        for key, value in user_options.items():
+            config["user_options"][key] = value
+        print("After changing user_options")
+        print(config)
+        with open(working_dir / "MLproject", "w") as file:
+            yaml.dump(config, file, sort_keys=False)
+
+    template = get_model_template_from_mlproject_file(
+        working_dir / "MLproject", ignore_env=ignore_env
+    )
+    return template
+
+
+# def get_model_from_directory_or_github_url(
+#     model_path,
+#     base_working_dir=Path("runs/"),
+#     ignore_env=False,
+#     run_dir_type: Literal["timestamp", "latest", "use_existing"] = "timestamp",
+# ):
+#     """
+#     Gets the model and initializes a working directory with the code for the model.
+#     model_path can be a local directory or github url
+
+#     Parameters
+#     ----------
+#     model_path : str
+#         Path to the model. Can be a local directory or a github url
+#     base_working_dir : Path, optional
+#         Base directory to store the working directory, by default Path("runs/")
+#     ignore_env : bool, optional
+#         If True, will ignore the environment specified in the MLproject file, by default False
+#     run_dir_type : Literal["timestamp", "latest", "use_existing"], optional
+#         Type of run directory to create, by default "timestamp", which creates a new directory based on current timestamp for the run.
+#         "latest" will create a new directory based on the model name, but will remove any existing directory with the same name.
+#         "use_existing" will use the existing directory specified by the model path if that exists. If that does not exist, "latest" will be used.
+#     """
+#     is_github = False
+#     commit = None
+#     if isinstance(model_path, str) and model_path.startswith("https://github.com"):
+#         dir_name = model_path.split("/")[-1].replace(".git", "")
+#         model_name = dir_name
+#         if "@" in model_path:
+#             model_path, commit = model_path.split("@")
+#         is_github = True
+#     else:
+#         model_name = Path(model_path).name
+
+#     if run_dir_type == "use_existing" and not Path(model_path).exists():
+#         run_dir_type = "latest"
+
+#     if run_dir_type == "latest":
+#         working_dir = base_working_dir / model_name / "latest"
+#         # clear working dir
+#         if working_dir.exists():
+#             logger.info(f"Removing previous working dir {working_dir}")
+#             shutil.rmtree(working_dir)
+#     elif run_dir_type == "timestamp":
+#         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+#         unique_identifier = timestamp + "_" + str(uuid.uuid4())[:8]
+#         # timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S%f")
+#         working_dir = base_working_dir / model_name / unique_identifier
+#         # check that working dir does not exist
+#         assert (
+#             not working_dir.exists()
+#         ), f"Working dir {working_dir} already exists. This should not happen if make_run_dir is True"
+#     elif run_dir_type == "use_existing":
+#         working_dir = Path(model_path)
+#     else:
+#         raise ValueError(f"Invalid run_dir_type: {run_dir_type}")
+
+#     logger.info(f"Writing results to {working_dir}")
+
+#     if is_github:
+#         working_dir.mkdir(parents=True)
+#         repo = git.Repo.clone_from(model_path, working_dir)
+#         if commit:
+#             logger.info(f"Checking out commit {commit}")
+#             repo.git.checkout(commit)
+
+#     elif run_dir_type == "use_existing":
+#         logging.info("Not copying any model files, using existing directory")
+#     else:
+#         # copy contents of model_path to working_dir
+#         logger.info(f"Copying files from {model_path} to {working_dir}")
+#         shutil.copytree(model_path, working_dir)
+
+#     logging.error(f"Current directory is {os.getcwd()}")
+#     logging.error(f"Working dir is {working_dir}")
+#     assert os.path.isdir(working_dir), working_dir
+#     assert os.path.isdir(os.path.abspath(working_dir)), working_dir
+#     # assert that a config file exists
+#     if (working_dir / "MLproject").exists():
+#         # return get_model_template_from_mlproject_file(
+#         #     working_dir / "MLproject", ignore_env=ignore_env
+#         # ).get_model(model_configuration=None)
+#         return get_model_from_mlproject_file(
+#             working_dir / "MLproject", ignore_env=ignore_env
+#         )
+#     else:
+#         raise InvalidModelException("No MLproject file found in model directory")
+
+
+# def get_model_template_from_mlproject_file(
+#     mlproject_file, ignore_env=False
+# ) -> ExternalModel:
+#     working_dir = Path(mlproject_file).parent
+
+#     with open(mlproject_file, "r") as file:
+#         config = yaml.load(file, Loader=yaml.FullLoader)
+#     config = ModelTemplateConfig.model_validate(config)
+
+#     model_template = ModelTemplate(config, working_dir, ignore_env)
+#     return model_template

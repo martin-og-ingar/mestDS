@@ -1,5 +1,6 @@
 import csv
 import datetime
+import traceback
 from dateutil.relativedelta import relativedelta
 import inspect
 import os
@@ -21,6 +22,7 @@ def softmax(x):
 class Simulation:
     id: int
     name: str
+    description: str
     time_delta: Literal["D", "W", "M"] = "W"
     length: int = 100
     start_date: datetime.date = datetime.date(2024, 1, 1)
@@ -68,26 +70,49 @@ class Simulation:
                     self.calculate_variable(variable)
 
     def calculate_variable(self, variable: Variable):
-        local_context = {}
-        exec(
-            variable.function,
-            {
-                "np": np,
-                "i": self.current_i,
-                "region": self.current_region,
-            },
-            local_context,
-        )
-        func_name = list(local_context.keys())[0]
-        func = local_context[func_name]
-        signature = inspect.signature(func)
-        parameters_required = signature.parameters
-        args = [
-            self.get_variable(param, variable.params) for param in parameters_required
-        ]
-        result = func(*args)
+        try:
+            local_context = {}
+            exec(
+                variable.function,
+                {
+                    "np": np,
+                    "i": self.current_i,
+                    "region": self.current_region,
+                },
+                local_context,
+            )
 
-        self.data[self.current_region.name][variable.name].append(result)
+            # Extract the function from the exec environment
+            func_name = list(local_context.keys())[0]
+            func = local_context[func_name]
+
+            # Extract required parameters from the function signature
+            signature = inspect.signature(func)
+            parameters_required = signature.parameters
+
+            # Build arguments from dependencies
+            args = [
+                self.get_variable(param, variable.params)
+                for param in parameters_required
+            ]
+
+            # Call the function
+            result = func(*args)
+
+            # Store the result
+            self.data[self.current_region.name][variable.name].append(result)
+
+        except Exception as e:
+            error_message = (
+                f"\nError in variable calculation:\n"
+                f"  Variable: '{variable.name}'\n"
+                f"  Time Index: {self.current_i}\n"
+                f"  Region: {self.current_region.name if hasattr(self.current_region, 'name') else self.current_region}\n"
+                f"  Function Source:\n{variable.function.strip()}\n"
+                f"  Exception: {type(e).__name__}: {str(e)}\n"
+                f"  Traceback:\n{traceback.format_exc()}"
+            )
+            raise RuntimeError(error_message) from e
 
     def get_variable(self, param_name, variable_params):
         # Special keywords
@@ -98,14 +123,15 @@ class Simulation:
 
         # Check if param is explicitly passed in params
         if variable_params and param_name in variable_params:
-            if (
-                param_name == "variable"
+            param_name = str(param_name)
+            if param_name.startswith(
+                "variable"
             ):  # the name "variable" is a reserved keyword. If param_name is "variable", it should look for the value in the dataset
                 param_name = variable_params[param_name]
             else:
                 return variable_params[param_name]
 
-        if self.public_lists and param_name in self.public_lists:
+        if self.public_lists is not None and param_name in self.public_lists:
             return self.public_lists[param_name]
         # Else, treat it as a reference to a public variable
         if param_name in self.data[self.current_region.name]:

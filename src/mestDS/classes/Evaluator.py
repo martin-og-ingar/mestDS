@@ -19,6 +19,7 @@ class Evaluator:
     def __init__(self, config):
         self.runner = set_runner(config)
         self.time_delta = config.get("time_delta")
+        self.sim_length = config.get("simulation_length")
         self.results = []
 
     def evaluate(
@@ -34,8 +35,13 @@ class Evaluator:
                 _sim = copy.deepcopy(sim)
                 if self.time_delta:
                     _sim.time_delta = self.time_delta
+                if self.sim_length:
+                    _sim.length = self.sim_length
+                if self.sim_length or self.time_delta:
                     _sim.simulate()
                 self.results.append(self.runner.run(simulation=_sim))
+                if _sim.description is not None:
+                    self.results[-1].description = _sim.description
         elif path:
             path_obj = Path(path)
             if path_obj.is_file() and path_obj.suffix == ".csv":
@@ -52,7 +58,7 @@ class Evaluator:
         filename = (
             f"{ensure_trailing_slash(path)}{timestamp}_{self.runner.model.name}.pdf"
         )
-        pdf = PDF(orientation="L")
+        pdf = PDF()
         pdf.add_page()
         pdf.add_header(f"Model Evaluation: {self.runner.model.name}")
         for result in self.results:
