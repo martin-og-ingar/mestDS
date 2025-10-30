@@ -1,21 +1,39 @@
 [build-system]
-requires = ["hatchling", "numpy", "matplotlib", "skforecast"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
+
 [project]
 name = "mestDS"
-version = "0.0.1"
-authors = [
-  { name="Martin Bolle", email="martin.bolle97@hotmail.com" },{ name="Ingar Benonisen", email="ibenonisen@gmail.com" },
-]
-description = "A small example package"
+version = "0.0.3"
+description = "mestDS with model evaluation"
 readme = "README.md"
 requires-python = ">=3.8"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Martin Bolle", email = "martin.bolle97@hotmail.com" },
+    { name = "Ingar Benonisen", email = "ibenonisen@gmail.com" }
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+    "Operating System :: OS Independent"
+]
+dependencies = [
+    "chap_core==1.0.17",
+    "fpdf2==2.8.2",
+    "GitPython==3.1.45",
+    "joblib==1.4.2",
+    "matplotlib==3.10.6",
+    "numpy==2.3.3",
+    "pandas==2.3.3",
+    "python_dateutil==2.9.0.post0",
+    "PyYAML==6.0.3",
+    "scikit_learn==1.7.2"
 ]
 
 [project.urls]
 Homepage = "https://github.com/martin-og-ingar/mestDS"
 Issues = "https://github.com/martin-og-ingar/mestDS/issues"
+
+[tool.hatch.metadata]
+allow-direct-references = true
