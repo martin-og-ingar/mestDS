@@ -42,6 +42,7 @@ class Simulation:
     def __init__(self):
         self.x = []
         self.y = []
+        self.public_lists = {}
         self.regions = []
 
     def simulate(self):
